@@ -155,7 +155,6 @@
     <None Include="Resources\SearchMagnifyingGlassIcon.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="ChangeLog.txt" />
     <Content Include="cook-book.ico" />
     <None Include="Resources\checkbox.png" />
     <None Include="Resources\Red_X.png" />

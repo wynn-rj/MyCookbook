@@ -5,7 +5,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("MyCookbook")]
-[assembly: AssemblyDescription("A cookbook program to store recipes")]
+[assembly: AssemblyDescription(@"A cookbook program to store recipes.
+
+Check https://github.com/wynn-rj/MyCookbook/releases for new possible updates")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("RJ Wynn")]
 [assembly: AssemblyProduct("MyCookbook")]
