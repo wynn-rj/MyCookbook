@@ -1,0 +1,57 @@
+﻿Version 1.3.2.*
+
+Update Notes:
+
+Additions:
+ - Added a backup feature for cookbooks
+Improvements:
+ - When the program is closed it now gives you the option to save
+Changes:
+ - When an image is dragged and dropped into a recipe it is now saved locally
+ - Installer now can prompt you to update, instead of requiring you to uninstall the previous version
+Fixes:
+ - Fixed a bug caused by images that were dragged in being saved to temp
+ - Fixed bug that caused a crash when right clicking on a recipe
+
+
+Version 1.3.2.0
+
+Update Notes:
+
+Additions:
+ - Arrow selection available for search bar
+ - Now an additional log that writes down all error messages
+Changes:
+ - Changed search bar selection event
+ - Log now only keeps the log of the current month
+Fixes:
+ - Fixed the path variable in config to not store file extension
+ - Fixed error caused by not having an amount for the ingredients
+ - Fixed bug where user added units could be combined
+ - Fixed bug where tablespoon and teaspoon unit had a value of 0 instead of intended value
+
+
+Version 1.3.1.0
+
+Update Notes:
+
+Additions:
+ - Added settings tab
+ - Added an ingredient search to search and find all recipes that use a particular ingredient
+ - Added a setting for whether or not to use the ingredient search
+Fixes:
+ - Fixed program not showing icon when running
+
+
+Version 1.3.0.0
+
+Update Notes:
+
+Additions: 
+ - Added new dialog page for printing a shopping list
+ - Added the ability to print a shopping list for multiple recipes, and to remove ingredients from list
+ - MyCookbook now remembers where you last saved even after closing program
+Improvements: 
+ - Improved upon previous shopping list
+Fixes: 
+ - Fixed error with file saving
