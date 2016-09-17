@@ -38,7 +38,9 @@ namespace MyCookbook
 
         private string filePath = null;
         public string executablePath;
+        public string appDataPath;
         public string configPath;
+        
 
         public bool[] settings;
         
@@ -59,7 +61,9 @@ namespace MyCookbook
 
             int width, height;
 
-            configPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\MyCookbook\MyCookbook.exe.config";
+            appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\MyCookbook";
+            configPath = appDataPath + @"\MyCookbook.exe.config";
+            
             
             ExeConfigurationFileMap map = new ExeConfigurationFileMap { ExeConfigFilename = configPath };
             Configuration config = ConfigurationManager.OpenMappedExeConfiguration(map, ConfigurationUserLevel.None);
@@ -111,7 +115,7 @@ namespace MyCookbook
             this.searchBar1.searchBarTextBox.Click += SearchBarTextBox_Click;
             this.searchBar1.OnSelection += SearchBar_OnSelection;
             this.searchBar1.UseSearchButton = true;
-            string[] toAdd = Ingredient.OpenIngredientDatabase(executablePath);
+            string[] toAdd = Ingredient.OpenIngredientDatabase(appDataPath);
 
             if (toAdd != null)
             {
@@ -190,7 +194,7 @@ namespace MyCookbook
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             MyDebug.Print("Saving Ingredients to databse");
-            Ingredient.SaveIngredientDatabase(executablePath);
+            Ingredient.SaveIngredientDatabase(appDataPath);
             MyDebug.Print("Ingredients saved!");
 
             MyDebug.Print("Saving Config Settings");
