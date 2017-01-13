@@ -1,4 +1,15 @@
-﻿Version 1.3.2.1
+Version 1.3.2.* (Current Developmental Build)
+
+Update Notes:
+
+Additions:
+ - 
+Improvements:
+ - 
+Changes:
+ - Moved IngredientDatabase to AppData
+
+Version 1.3.2.1 (Last Release)
 
 Update Notes:
 
