@@ -1,4 +1,4 @@
-﻿Version 1.3.2.* (Current Developmental Build)
+Version 1.3.2.* (Current Developmental Build)
 
 Update Notes:
 
@@ -15,6 +15,8 @@ Update Notes:
 
 Additions:
  - Added a backup feature for cookbooks
+ - MyCookbook has been added to Github
+ - New versions of MyCookbook can now be found on Github
 Improvements:
  - When the program is closed it now gives you the option to save
 Changes:
