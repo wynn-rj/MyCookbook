@@ -179,6 +179,7 @@ namespace MyCookbook
                     MessageBox.Show(message, caption, buttons);
 
                     imageLocation = "";
+                    imageLocation = recipePictureBox.ImageLocation;
                 }
             }
             else
