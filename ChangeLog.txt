@@ -3,7 +3,7 @@ Version 1.3.3.0 (Last Release)
 Update Notes:
 
 Additions:
- - Added functionality for program to remember what were the last open cookbooks and reopen when it is openend again
+ - Added functionality for program to remember what were the last open cookbooks and reopen when it is opened again
  - Open cookbooks can now be closed by right clicking their name in the tree
 Improvements:
  - How the Config file is setup in the installation so that the program doesn't crash
