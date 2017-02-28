@@ -540,7 +540,7 @@ namespace MyCookbook
             }        
             else
             {
-                MyDebug.Warn("Dragged File is resulted in null value", "RecipePictureBox_DragDrop");
+                MyDebug.Warn("Dragged File resulted in null value", "RecipePictureBox_DragDrop");
             }    
         }
 
