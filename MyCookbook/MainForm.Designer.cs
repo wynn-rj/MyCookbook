@@ -44,6 +44,7 @@ namespace MyCookbook
             this.printRecipeToolStripItem = new System.Windows.Forms.ToolStripMenuItem();
             this.printCookbookToolStripItem = new System.Windows.Forms.ToolStripMenuItem();
             this.printShoppingListToolStripItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripInfoButton = new System.Windows.Forms.ToolStripButton();
             this.cookbookTree = new System.Windows.Forms.TreeView();
@@ -52,7 +53,6 @@ namespace MyCookbook
             this.printPreviewDialog1 = new System.Windows.Forms.PrintPreviewDialog();
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.searchBar1 = new MyCookbook.SearchBar();
-            this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripHeader.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -91,7 +91,7 @@ namespace MyCookbook
             this.typeToolStripMenuItem,
             this.recipeToolStripMenuItem});
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.newToolStripMenuItem.Text = "New";
             // 
             // cookbookToolStripMenuItem
@@ -118,14 +118,14 @@ namespace MyCookbook
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // importToolStripMenuItem
             // 
             this.importToolStripMenuItem.Name = "importToolStripMenuItem";
-            this.importToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.importToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.importToolStripMenuItem.Text = "Import";
             this.importToolStripMenuItem.Click += new System.EventHandler(this.importToolStripMenuItem_Click);
             // 
@@ -133,7 +133,7 @@ namespace MyCookbook
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeyDisplayString = "";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.saveToolStripMenuItem.Text = "Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
@@ -144,34 +144,41 @@ namespace MyCookbook
             this.printCookbookToolStripItem,
             this.printShoppingListToolStripItem});
             this.printToolStripMenuItem.Name = "printToolStripMenuItem";
-            this.printToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.printToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.printToolStripMenuItem.Text = "Print";
             // 
             // printRecipeToolStripItem
             // 
             this.printRecipeToolStripItem.Name = "printRecipeToolStripItem";
-            this.printRecipeToolStripItem.Size = new System.Drawing.Size(152, 22);
+            this.printRecipeToolStripItem.Size = new System.Drawing.Size(146, 22);
             this.printRecipeToolStripItem.Text = "Recipe";
             this.printRecipeToolStripItem.Click += new System.EventHandler(this.printRecipeToolStripItem_Click);
             // 
             // printCookbookToolStripItem
             // 
             this.printCookbookToolStripItem.Name = "printCookbookToolStripItem";
-            this.printCookbookToolStripItem.Size = new System.Drawing.Size(152, 22);
+            this.printCookbookToolStripItem.Size = new System.Drawing.Size(146, 22);
             this.printCookbookToolStripItem.Text = "Cookbook";
             this.printCookbookToolStripItem.Click += new System.EventHandler(this.printCookbookToolStripItem_Click);
             // 
             // printShoppingListToolStripItem
             // 
             this.printShoppingListToolStripItem.Name = "printShoppingListToolStripItem";
-            this.printShoppingListToolStripItem.Size = new System.Drawing.Size(152, 22);
+            this.printShoppingListToolStripItem.Size = new System.Drawing.Size(146, 22);
             this.printShoppingListToolStripItem.Text = "Shopping List";
             this.printShoppingListToolStripItem.Click += new System.EventHandler(this.printShoppingListToolStripItem_Click);
+            // 
+            // settingsToolStripMenuItem
+            // 
+            this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.settingsToolStripMenuItem.Text = "Settings";
+            this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -236,13 +243,6 @@ namespace MyCookbook
             this.searchBar1.Size = new System.Drawing.Size(174, 20);
             this.searchBar1.TabIndex = 2;
             this.searchBar1.UseSearchButton = false;
-            // 
-            // settingsToolStripMenuItem
-            // 
-            this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.settingsToolStripMenuItem.Text = "Settings";
-            this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
             // 
             // MainForm
             // 

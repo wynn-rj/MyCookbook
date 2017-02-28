@@ -1,15 +1,19 @@
-Version 1.3.2.* (Current Developmental Build)
+Version 1.3.3.0 (Last Release)
 
 Update Notes:
 
 Additions:
- - 
+ - Added functionality for program to remember what were the last open cookbooks and reopen when it is openend again
+ - Open cookbooks can now be closed by right clicking their name in the tree
 Improvements:
- - 
+ - How the Config file is setup in the installation so that the program doesn't crash
 Changes:
  - Moved IngredientDatabase to AppData
+Fixes:
+ - Fixed bug that caused a crash when image files were deleted
 
-Version 1.3.2.1 (Last Release)
+
+Version 1.3.2.1 
 
 Update Notes:
 

@@ -43,7 +43,9 @@ namespace MyCookbook
         
 
         public bool[] settings;
-        
+
+        private Dictionary<string, string> cookbookFileLocations = new Dictionary<string, string>();
+
 
         public MainForm()
         {
@@ -73,24 +75,24 @@ namespace MyCookbook
             
             ExeConfigurationFileMap map = new ExeConfigurationFileMap { ExeConfigFilename = configPath };
             Configuration config = ConfigurationManager.OpenMappedExeConfiguration(map, ConfigurationUserLevel.None);
-            
+
             try
             {
                 MyDebug.Print("Reading config width and height");
 
-                if(config.AppSettings.Settings["Width"] == null)
+                if (!config.AppSettings.Settings.AllKeys.Contains("Width"))
                 {
                     MyDebug.Warn("Width doesn't exist. Setting to 1080", "MainForm");
                     config.AppSettings.Settings.Add("Width", "1080");
                 }
 
-                if (config.AppSettings.Settings["Height"] == null)
+                if (!config.AppSettings.Settings.AllKeys.Contains("Height"))
                 {
                     MyDebug.Warn("Height doesn't exist. Setting to 720", "MainForm");
                     config.AppSettings.Settings.Add("Height", "720");
                 }
 
-                
+
 
                 MyDebug.Print(config.AppSettings.Settings["Width"].Value + " " + config.AppSettings.Settings["Height"].Value);
                 width = Convert.ToInt32(config.AppSettings.Settings["Width"].Value);
@@ -98,7 +100,7 @@ namespace MyCookbook
 
                 MyDebug.Print("Reading config Settings");
                 List<bool> temp = new List<bool>();
-                if(config.AppSettings.Settings["Settings"] != null)
+                if (config.AppSettings.Settings.AllKeys.Contains("Settings"))
                 {
                     MyDebug.Print("Settings: " + config.AppSettings.Settings["Settings"].Value);
                     foreach (char c in config.AppSettings.Settings["Settings"].Value)
@@ -107,22 +109,45 @@ namespace MyCookbook
                             temp.Add(false);
                         else
                             temp.Add(true);
-                    }                    
+                    }
                 }
                 else
                 {
                     MyDebug.Warn("Settings doesn't exist. Setting to equal 0", "MainForm");
                     config.AppSettings.Settings.Add("Settings", "0");
-                    temp.Add(false);                    
+                    temp.Add(false);
                 }
 
                 settings = temp.ToArray();
 
                 MyDebug.Print("Reading config path");
-                if (config.AppSettings.Settings["Path"] == null)
+                if (!config.AppSettings.Settings.AllKeys.Contains("Path"))
                 {
                     MyDebug.Warn("Path doesn't exist. Setting to " + documentsPath, "MainForm");
                     config.AppSettings.Settings.Add("Path", documentsPath);
+                }
+
+                MyDebug.Print("Reading config CookbooksLastOpen");
+                if (config.AppSettings.Settings.AllKeys.Contains("CookbooksLastOpen"))
+                {
+                    string rawValues = config.AppSettings.Settings["CookbooksLastOpen"].Value;
+                    string[] cookbookAddresses = rawValues.Split('|');
+                    foreach (string address in cookbookAddresses)
+                    {
+                        if(File.Exists(address))
+                        {
+                            OpenCookbook(address);
+                        }
+                        else
+                        {
+                            MyDebug.Warn("File location of cookbook trying to be opened from previous run doesn't exist", "MainForm");
+                        }
+                    }
+                }
+                else
+                {
+                    MyDebug.Warn("CookbooksLastOpen doesn't exist. Setting to empty", "MainForm");
+                    config.AppSettings.Settings.Add("Path", "");
                 }
             }
             catch
@@ -242,6 +267,18 @@ namespace MyCookbook
             if (filePath != null)
                 config.AppSettings.Settings["Path"].Value = filePath;
 
+            //Takes each string and combines them with the | delimiter
+            string lastOpenCookbooks = string.Join("|", cookbookFileLocations.Values);
+
+            if (config.AppSettings.Settings.AllKeys.Contains("CookbooksLastOpen"))
+            {
+                config.AppSettings.Settings["CookbooksLastOpen"].Value = lastOpenCookbooks;
+            }
+            else
+            {
+                config.AppSettings.Settings.Add("CookbooksLastOpen", lastOpenCookbooks);
+            }
+
             string toSaveSettings = "";
 
             foreach (bool flag in settings)
@@ -333,7 +370,17 @@ namespace MyCookbook
         /// </summary>
         private void cookbookTree_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
         {
-            
+            //Changes the listings of file locations if the cookbook is renamed
+            if (e.Node.Level == 0)
+            {
+                string oldName = e.Node.Text;
+                string newName = e.Label;
+                string fileLocation = cookbookFileLocations[oldName];
+
+                cookbookFileLocations.Remove(oldName);
+                cookbookFileLocations.Add(newName, fileLocation);
+            }
+
             e.Node.Name = e.Node.Text = e.Label;
             //MyDebug.Print(e.Node.Text + " | " + e.Node.Name + " | " + e.Label);
             nodeIsEditing = false;
@@ -366,6 +413,26 @@ namespace MyCookbook
             if(e.Button == MouseButtons.Right)
             {
                 MyDebug.Print("Right mouse button clicked");
+
+                if(e.Node.Level == 0)
+                {
+                    ContextMenuStrip treeRecipeContextMenuStrip = new ContextMenuStrip();
+                    ToolStripMenuItem closeToolStripMenuItem = new ToolStripMenuItem("Close Cookbook", null, closeCookbook);
+                    ToolStripMenuItem printToolStripMenuItem1 = new ToolStripMenuItem("Print", null, printCookbookToolStripItem_Click);
+
+                    treeRecipeContextMenuStrip.SuspendLayout();
+
+                    treeRecipeContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+                        closeToolStripMenuItem,
+                        printToolStripMenuItem1}
+                    );
+                    treeRecipeContextMenuStrip.Name = "treeContextMenuStrip";
+                    treeRecipeContextMenuStrip.Size = new System.Drawing.Size(176, 92);
+                    
+                    treeRecipeContextMenuStrip.ResumeLayout(false);
+                    treeRecipeContextMenuStrip.Show(cookbookTree, e.Location);
+                }
+
                 if (e.Node.Level == 2)
                 {
                     ContextMenuStrip treeRecipeContextMenuStrip = new ContextMenuStrip();
@@ -393,6 +460,63 @@ namespace MyCookbook
                     treeRecipeContextMenuStrip.ResumeLayout(false);
                     treeRecipeContextMenuStrip.Show(cookbookTree, e.Location);
                 }
+            }
+
+        }
+
+        private void closeCookbook(object sender, EventArgs e)
+        {
+            DialogResult result = DialogResult.None;
+            if (needSave)
+            {
+                string message = "Are you sure you want to close this cookbook without saving?\nAnything that is not saved will be lost";
+
+                string caption = "Are you sure?";
+                MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel;                
+
+                result = MessageBox.Show(message, caption, buttons);
+            } 
+
+            if (!needSave || result == DialogResult.Yes)
+            {
+                MyDebug.Print("Closing Cookbook: " + currentCookbookNode.Text);
+                cookbookFileLocations.Remove(currentCookbookNode.Text);
+                if (loadedRecipes.Count > 0)
+                {
+                    List<int> toRemove = new List<int>();
+                    foreach (Recipe rec in loadedRecipes)
+                    {
+                        if (rec.node.Parent.Parent == currentTypeNode)
+                        {
+                            toRemove.Add(rec.index);
+                        }
+                    }
+                    if (toRemove.Count > 0)
+                    {
+                        foreach (int index in toRemove)
+                        {
+                            MyDebug.Print("Closing recipe: " + loadedRecipes[index].recipeName);
+                            loadedRecipes[index].node.Remove();
+                            loadedRecipes[index].SetVisible(false);
+                            loadedRecipes.RemoveAt(index);
+                        }
+                    }
+
+                }                
+                
+                cookbookTree.SelectedNode.Remove();
+                currentSelectedRecipeIndex = -1;
+
+                if (loadedRecipes.Count > 0)
+                {
+                    Recipe.ResetIndex();
+                    foreach (Recipe rec in loadedRecipes)
+                    {
+                        rec.ReloadRecipeIndex();
+                        MyDebug.Print("Recipe: " + rec + " index set to " + rec.index);
+                    }
+                }
+
             }
 
         }
@@ -494,6 +618,7 @@ namespace MyCookbook
                 if (cookbookTree.SelectedNode == currentCookbookNode)
                 {
                     MyDebug.Print("Deleting Cookbook: " + currentCookbookNode.Text);
+                    cookbookFileLocations.Remove(currentCookbookNode.Text);
                     if (loadedRecipes.Count > 0)
                     {
                         List<int> toRemove = new List<int>();
@@ -817,7 +942,9 @@ namespace MyCookbook
 
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)    //Shows save dialog popup and verifys that user hit save
                 {
-                    filePath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);                    
+                    filePath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);
+
+                    cookbookFileLocations[currentCookbookNode.Text] = saveFileDialog.FileName;             
 
                     if ((myStream = saveFileDialog.OpenFile()) != null)    //Opens byte stream to write file
                     {
@@ -895,114 +1022,116 @@ namespace MyCookbook
             }
         }
 
-
-
         public void OpenCookbook()
+        {
+            if (openFileDialog.ShowDialog() == DialogResult.OK)    //Opens open dialog and verifys open was selected
+            {                
+                OpenCookbook(openFileDialog.FileName);
+            }
+        }
+
+        public void OpenCookbook(string file)
         {
             //Used to get all the bytes from the file since file size isnt known
             List<byte> fileDump = new List<byte>();
-            
 
-            if (openFileDialog.ShowDialog() == DialogResult.OK)    //Opens open dialog and verifys open was selected
+            filePath = System.IO.Path.GetDirectoryName(file);
+
+            string backupFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\MyCookbook\Backup\";
+
+            string name = Path.GetFileNameWithoutExtension(file);
+
+            if (!System.IO.Directory.Exists(backupFolder))
+                System.IO.Directory.CreateDirectory(backupFolder);
+
+            if (File.Exists(backupFolder + name + "-BACKUP.ckbk"))
             {
-
-                filePath = System.IO.Path.GetDirectoryName(openFileDialog.FileName);
-
-                string backupFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\MyCookbook\Backup\";
-
-                string name = Path.GetFileNameWithoutExtension(openFileDialog.FileName);
-
-                if (!System.IO.Directory.Exists(backupFolder))
-                    System.IO.Directory.CreateDirectory(backupFolder);
-
-                if (File.Exists(backupFolder + name + "-BACKUP.ckbk"))
+                if(!File.Exists(backupFolder + name + "-BACKUP-2.ckbk"))
                 {
-                    if(!File.Exists(backupFolder + name + "-BACKUP-2.ckbk"))
-                    {
-                        File.Create(backupFolder + name + "-BACKUP-2.ckbk").Close();                        
-                    }                        
-                    File.Replace(backupFolder + name + "-BACKUP.ckbk", backupFolder + name + "-BACKUP-2.ckbk", null);
-                }
+                    File.Create(backupFolder + name + "-BACKUP-2.ckbk").Close();                        
+                }                        
+                File.Replace(backupFolder + name + "-BACKUP.ckbk", backupFolder + name + "-BACKUP-2.ckbk", null);
+            }
 
-                File.Copy(openFileDialog.FileName, backupFolder + name + "-BACKUP.ckbk");
+            File.Copy(file, backupFolder + name + "-BACKUP.ckbk");
 
-                MyDebug.Print(openFileDialog.FileName);
-                //Reads in the byte file
-                using (Stream sr = File.OpenRead(openFileDialog.FileName))
+            MyDebug.Print(file);
+            //Reads in the byte file
+            using (Stream sr = File.OpenRead(file))
+            {
+                int temp;
+                temp = sr.ReadByte();   //ReadByte returns an int for some reason. Is casted later
+                do
                 {
-                    int temp;
-                    temp = sr.ReadByte();   //ReadByte returns an int for some reason. Is casted later
-                    do
-                    {
-                        fileDump.Add((byte)temp);   //Casts int into byte that was read
-                        temp = sr.ReadByte();       //Reads next byte
-                    } while (temp != -1);   //Runs until file is empty
-                }
+                    fileDump.Add((byte)temp);   //Casts int into byte that was read
+                    temp = sr.ReadByte();       //Reads next byte
+                } while (temp != -1);   //Runs until file is empty
+            }
 
-                //fileDump.RemoveAll(EqualsNewLine);      //Removes all new line characters
-                //fileDump.RemoveAt(0);                   //Removes First Quote
-                //fileDump.RemoveAt(fileDump.Count - 1);  //Removes last quote
+            //fileDump.RemoveAll(EqualsNewLine);      //Removes all new line characters
+            //fileDump.RemoveAt(0);                   //Removes First Quote
+            //fileDump.RemoveAt(fileDump.Count - 1);  //Removes last quote
 
 
-                //Converts byte list to byte array
-                byte[] fileDumpByteArray = fileDump.ToArray();
+            //Converts byte list to byte array
+            byte[] fileDumpByteArray = fileDump.ToArray();
 
-                //Converts byte array to string
-                //GetString is in recipe because that is where it was first implemented, not because it uses anything from recipe.
-                string fileDumpString = Recipe.GetString(fileDumpByteArray);
+            //Converts byte array to string
+            //GetString is in recipe because that is where it was first implemented, not because it uses anything from recipe.
+            string fileDumpString = Recipe.GetString(fileDumpByteArray);
 
-                List<char> stringEdit = fileDumpString.ToCharArray().ToList();
+            List<char> stringEdit = fileDumpString.ToCharArray().ToList();
 
-                stringEdit.RemoveAll(EqualsNewLine);      //Removes all new line characters
-                stringEdit.RemoveAt(0);                   //Removes First Quote
-                stringEdit.RemoveAt(stringEdit.Count - 1);  //Removes last quote
+            stringEdit.RemoveAll(EqualsNewLine);      //Removes all new line characters
+            stringEdit.RemoveAt(0);                   //Removes First Quote
+            stringEdit.RemoveAt(stringEdit.Count - 1);  //Removes last quote
 
-                fileDumpString = new string(stringEdit.ToArray());
+            fileDumpString = new string(stringEdit.ToArray());
 
-                MyDebug.Print(delimiter);
+            MyDebug.Print(delimiter);
 
-                //Splits the string into an array based of the seperator semicolon
-                string[] args = fileDumpString.Split(new string[] { delimiter }, StringSplitOptions.None);
+            //Splits the string into an array based of the seperator semicolon
+            string[] args = fileDumpString.Split(new string[] { delimiter }, StringSplitOptions.None);
 
-                MyDebug.Print(fileDumpString);
+            MyDebug.Print(fileDumpString);
 
 
 
-                //Verifys file isnt empty
-                if (args.Length > 0)
+            //Verifys file isnt empty
+            if (args.Length > 0)
+            {
+                string versionID;
+
+                //Find version ID
+                MyDebug.Print("Checking version ID");
+                versionID = args[0].Substring(((@"""Version: ").Length - 1));
+                MyDebug.Print(args[0]);
+                switch (versionID[0])
                 {
-                    string versionID;
+                    case '1':
+                        OpenCookbookVersion1(args, file);
+                        break;
 
-                    //Find version ID
-                    MyDebug.Print("Checking version ID");
-                    versionID = args[0].Substring(((@"""Version: ").Length - 1));
-                    MyDebug.Print(args[0]);
-                    switch (versionID[0])
-                    {
-                        case '1':
-                            OpenCookbookVersion1(args);
-                            break;
+                    default:
+                        string message = "The file failed to be read. The version number is not an accepted value.";
+                        string caption = "Open file error";
+                        MessageBoxButtons buttons = MessageBoxButtons.OK;
 
-                        default:
-                            string message = "The file failed to be read. The version number is not an accepted value.";
-                            string caption = "Open file error";
-                            MessageBoxButtons buttons = MessageBoxButtons.OK;
-
-                            MessageBox.Show(message, caption, buttons);
-                            MyDebug.Error("Invalid Version ID", "OpenCookbook", 490);
-                            break;
-                    }
-
+                        MessageBox.Show(message, caption, buttons);
+                        MyDebug.Error("Invalid Version ID", "OpenCookbook", 490);
+                        break;
                 }
 
             }
+
+            
             needSave = false;
         }
 
 
 
 
-        private void OpenCookbookVersion1(string[] args)
+        private void OpenCookbookVersion1(string[] args, string fileLocation)
         {
             try
             {
@@ -1010,6 +1139,7 @@ namespace MyCookbook
                 //Adds cookbook from cookbook name
                 MyDebug.Print("Processing: Name");
                 AddCookbook(args[1]);
+                cookbookFileLocations.Add(args[1], fileLocation);
 
                 //Gets how many types there are in the cookbook
                 MyDebug.Print("Processing: typeAmount");
