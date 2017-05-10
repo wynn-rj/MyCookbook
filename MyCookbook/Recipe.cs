@@ -234,6 +234,11 @@ namespace MyCookbook
             cookingUtensilComboBox.Size = new System.Drawing.Size((int)(halfWidthWithSpacing * .5), 21);
             cookingUtensilComboBox.TabIndex = 2;
             cookingUtensilComboBox.Items.AddRange(new String[] { "Conventional Oven", "Convection Oven", "Pan", "Pot", "Toaster", "Microwave", "Griddle", "Bowl" });
+            ContextMenuStrip cm = new ContextMenuStrip();
+            ToolStripMenuItem clearToolStripMenuItem = new ToolStripMenuItem("Clear cooking utensil", null, clearUtensil);
+            cm.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { clearToolStripMenuItem });
+            cookingUtensilComboBox.ContextMenuStrip = cm;
+            //cookingUtensilComboBox.MouseClick += CookingUtensilComboBox_MouseClick;
             cookingUtensilComboBox.KeyPress += CookingUtensilComboBox_KeyPress;
             cookingUtensilComboBox.SelectedIndexChanged += CookingUtensilComboBox_SelectedIndexChanged;
             foreach(object item in cookingUtensilComboBox.Items)
@@ -266,6 +271,10 @@ namespace MyCookbook
             temperatureNumeric.Minimum = 0;
             temperatureNumeric.Visible = !useComboBox;
             temperatureNumeric.Enabled = !useComboBox;
+            if(cookingUtensil.Equals(""))
+            {
+                temperatureNumeric.Enabled = false;
+            }
             //
             //
             //
@@ -436,6 +445,18 @@ namespace MyCookbook
                 this.temperature = 0;
             }
 
+        }
+
+        private void clearUtensil(object sender, EventArgs e)
+        {
+            cookingUtensilComboBox.Text = "";
+            cookingUtensil = "";
+            temperatureComboBox.Visible = false;
+            temperatureNumeric.Visible = true;
+            temperature = 0;
+            temperatureNumeric.Value = temperature;
+            temperatureComboBox.SelectedIndex = temperature;
+            temperatureNumeric.Enabled = false;         
         }
 
         private void CookingUtensilComboBox_SelectedIndexChanged(object sender, EventArgs e)

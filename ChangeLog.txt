@@ -1,4 +1,21 @@
-Version 1.3.3.0 (Last Release)
+Version 1.4.0.0 (Last Release)
+
+Update Notes:
+
+Additions:
+ - Added the ability to import recipes from websites
+ - Websites include:
+	- bettycrocker.com
+	- allrecipes.com
+	- seriouseats.com
+	- food.com
+ - Added an auto update feature
+ - Added ability to clear the selected cooking utensil
+Fixes:
+ - Fixed bug that caused a crash when writing to the error log
+ 
+
+Version 1.3.3.0
 
 Update Notes:
 

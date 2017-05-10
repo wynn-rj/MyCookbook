@@ -23,10 +23,11 @@ namespace RJWynn.Debugging
         /// <param name="doLog"></param>
         /// <param name="file"></param>
         public static void Initialize(bool doLog, string file)
-        {
-            file += @"\log.txt";
+        {            
             MyDebug.errorFile = file + @"\ErrorLog.txt";
             MyDebug.doLog = doLog;
+
+            file += @"\log.txt";
             MyDebug.file = file;
             
             if (doLog)

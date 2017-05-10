@@ -9,12 +9,14 @@ using RJWynn.Forms;
 using System.Drawing.Printing;
 using System.Configuration;
 using System.Reflection;
+using System.Diagnostics;
+using System.Net;
 
 namespace MyCookbook
 {
     //NEW_FEATURE: Custom Units
-    //NEW_FEATURE: Clear temp/util
     //NEW_FEATURE: Import cookbook into other cookbook
+    //NEW_FEATURE: Read web page
 
     public partial class MainForm : Form
     {
@@ -126,6 +128,8 @@ namespace MyCookbook
                     MyDebug.Warn("Path doesn't exist. Setting to " + documentsPath, "MainForm");
                     config.AppSettings.Settings.Add("Path", documentsPath);
                 }
+
+                this.checkAndTryUpdate();
 
                 MyDebug.Print("Reading config CookbooksLastOpen");
                 if (config.AppSettings.Settings.AllKeys.Contains("CookbooksLastOpen"))
@@ -813,6 +817,107 @@ namespace MyCookbook
             }
         }
 
+        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SettingsDialog settingDialog = new SettingsDialog(settings);
+            settingDialog.ShowDialog();
+            settings = settingDialog.ReturnSettings;
+        }
+
+
+        private void recipeFromWebsiteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            WebPageUrlRequestDialog urlDialog = new WebPageUrlRequestDialog();
+            urlDialog.ShowDialog();
+            string url = urlDialog.urlTextBox.Text;
+
+            string[] parsedData;
+
+            try
+            {
+                MyDebug.Print("Parsing URL");
+                parsedData = WebParser.ParseSite(url);
+
+                string name = parsedData[0];
+                string img = parsedData[1].Split(WebParser.SEPERATOR)[1];
+
+                string picturePath = "";
+
+                MyDebug.Print("Saving Image");
+
+                try
+                {
+                    if (!System.IO.Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\MyCookbook\Pictures\"))
+                        System.IO.Directory.CreateDirectory((Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\MyCookbook\Pictures\"));
+
+                    picturePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\MyCookbook\Pictures\" + name + img.Substring(img.Length - 4, 4);
+
+                    using (WebClient client = new WebClient())
+                    {
+                        client.DownloadFile(img, picturePath);
+                    }
+                }
+                catch 
+                {
+
+                }
+                
+
+                MyDebug.Print("Seperating Array");
+                bool onSteps = false;
+                List<string> ingredients = new List<string>();
+                string steps = "";
+                for (int i = 2; i < parsedData.Length; i++)
+                {
+                    if(onSteps)
+                    {
+                        steps = steps + parsedData[i] + "\n";
+                    }
+                    else
+                    {
+                        if (parsedData[i].Equals(WebParser.STEP_SEPERATOR))
+                        {
+                            onSteps = true;
+                        }
+                        else
+                        {
+                            ingredients.Add(parsedData[i]);
+                        }
+                    }
+                    
+                }
+
+                MyDebug.Print("Adding Recipe");
+                AddRecipe(name, 0, 0, 0, steps, "", 0, picturePath, false);
+                needSave = true;
+
+                MyDebug.Print("Adding ingredients");
+                foreach (string s in ingredients)
+                {
+                    if (s.Contains(WebParser.SEPERATOR))
+                    {
+                        string[] split = s.Split(WebParser.SEPERATOR);
+                        loadedRecipes.Last().AddIngredient(split[1], split[0], "");
+                    }
+                    else
+                    {
+                        loadedRecipes.Last().AddIngredient(s, "", "");
+                    }
+                }
+                SelectRecipe(loadedRecipes.Last());
+            }
+            catch (Exception ex)
+            {
+                string message = "The site you entered was unable to be read.";
+                string caption = "Parsing Error";
+                MessageBoxButtons buttons = MessageBoxButtons.OK;
+
+                MessageBox.Show(message, caption, buttons);
+
+                MyDebug.Error(ex.Message, ex.Source, 899);
+            }
+        }
+
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         #endregion Events
@@ -1497,14 +1602,36 @@ namespace MyCookbook
 
         }
 
-        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void checkAndTryUpdate()
         {
-            SettingsDialog settingDialog = new SettingsDialog(settings);
-            settingDialog.ShowDialog();
-            settings = settingDialog.ReturnSettings;
+            string filePath = "MyCookbookSetup.msi";
+
+            string latestVersion = AutoUpdater.CheckForUpdate();
+            if (AutoUpdater.CheckVersions(Assembly.GetExecutingAssembly().GetName().Version.ToString(), latestVersion))
+            {
+                MyDebug.Print("Update found, asking to update");
+                string message = "A new version of MyCookbook is available, do you want to install it now?";
+                string caption = "Update";
+                MessageBoxButtons buttons = MessageBoxButtons.YesNo;
+
+                DialogResult result;
+
+                result = MessageBox.Show(message, caption, buttons);
+
+                if (result == DialogResult.Yes)
+                {
+                    if(File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                    }
+
+                    AutoUpdater.GetUpdate(latestVersion);
+                    MyDebug.Print("New versiond downloaded, running installer and closing current application");
+                    Process.Start(filePath);
+                    this.Close();
+                }
+            }
         }
-
-
 
 
         /// <summary>
@@ -1514,12 +1641,8 @@ namespace MyCookbook
         /// <returns>If equal to new line</returns>
         private static bool EqualsNewLine(char c)
         {
-            if (c == '\n')
-                return true;
-            return false;
-        }
-
-        
+            return (c == '\n');            
+        }       
 
 
     }
