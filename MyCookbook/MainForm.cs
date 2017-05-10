@@ -15,8 +15,7 @@ using System.Net;
 namespace MyCookbook
 {
     //NEW_FEATURE: Custom Units
-    //NEW_FEATURE: Import cookbook into other cookbook
-    //NEW_FEATURE: Read web page
+    //NEW_FEATURE: Import cookbook into other cookbook]
 
     public partial class MainForm : Form
     {
@@ -42,7 +41,8 @@ namespace MyCookbook
         public string documentsPath;
         public string appDataPath;
         public string configPath;
-        
+
+        private bool closedForUpdate;        
 
         public bool[] settings;
 
@@ -73,126 +73,132 @@ namespace MyCookbook
                 MyDebug.Error("Config file missing, copying from file location", "MainForm", 69);
                 File.Copy("MyCookbook.exe.config", configPath);
             }
-            
-            
-            ExeConfigurationFileMap map = new ExeConfigurationFileMap { ExeConfigFilename = configPath };
-            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(map, ConfigurationUserLevel.None);
 
-            try
+            closedForUpdate = this.checkAndTryUpdate();
+
+            if (!closedForUpdate)
             {
-                MyDebug.Print("Reading config width and height");
+                ExeConfigurationFileMap map = new ExeConfigurationFileMap { ExeConfigFilename = configPath };
+                Configuration config = ConfigurationManager.OpenMappedExeConfiguration(map, ConfigurationUserLevel.None);
 
-                if (!config.AppSettings.Settings.AllKeys.Contains("Width"))
+                try
                 {
-                    MyDebug.Warn("Width doesn't exist. Setting to 1080", "MainForm");
+                    MyDebug.Print("Reading config width and height");
+
+                    if (!config.AppSettings.Settings.AllKeys.Contains("Width"))
+                    {
+                        MyDebug.Warn("Width doesn't exist. Setting to 1080", "MainForm");
+                        config.AppSettings.Settings.Add("Width", "1080");
+                    }
+
+                    if (!config.AppSettings.Settings.AllKeys.Contains("Height"))
+                    {
+                        MyDebug.Warn("Height doesn't exist. Setting to 720", "MainForm");
+                        config.AppSettings.Settings.Add("Height", "720");
+                    }
+
+
+
+                    MyDebug.Print(config.AppSettings.Settings["Width"].Value + " " + config.AppSettings.Settings["Height"].Value);
+                    width = Convert.ToInt32(config.AppSettings.Settings["Width"].Value);
+                    height = Convert.ToInt32(config.AppSettings.Settings["Height"].Value);
+
+                    MyDebug.Print("Reading config Settings");
+                    List<bool> temp = new List<bool>();
+                    if (config.AppSettings.Settings.AllKeys.Contains("Settings"))
+                    {
+                        MyDebug.Print("Settings: " + config.AppSettings.Settings["Settings"].Value);
+                        foreach (char c in config.AppSettings.Settings["Settings"].Value)
+                        {
+                            if (c == '0')
+                                temp.Add(false);
+                            else
+                                temp.Add(true);
+                        }
+                    }
+                    else
+                    {
+                        MyDebug.Warn("Settings doesn't exist. Setting to equal 0", "MainForm");
+                        config.AppSettings.Settings.Add("Settings", "0");
+                        temp.Add(false);
+                    }
+
+                    settings = temp.ToArray();
+
+                    MyDebug.Print("Reading config path");
+                    if (!config.AppSettings.Settings.AllKeys.Contains("Path"))
+                    {
+                        MyDebug.Warn("Path doesn't exist. Setting to " + documentsPath, "MainForm");
+                        config.AppSettings.Settings.Add("Path", documentsPath);
+                    }
+
+                    MyDebug.Print("Reading config CookbooksLastOpen");
+                    if (config.AppSettings.Settings.AllKeys.Contains("CookbooksLastOpen"))
+                    {
+                        string rawValues = config.AppSettings.Settings["CookbooksLastOpen"].Value;
+                        string[] cookbookAddresses = rawValues.Split('|');
+                        foreach (string address in cookbookAddresses)
+                        {
+                            if (File.Exists(address))
+                            {
+                                OpenCookbook(address);
+                            }
+                            else
+                            {
+                                MyDebug.Warn("File location of cookbook trying to be opened from previous run doesn't exist", "MainForm");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MyDebug.Warn("CookbooksLastOpen doesn't exist. Setting to empty", "MainForm");
+                        config.AppSettings.Settings.Add("Path", "");
+                    }
+                }
+                catch
+                {
+                    width = 1080;
+                    height = 720;
+                    config.AppSettings.Settings.Clear();
                     config.AppSettings.Settings.Add("Width", "1080");
-                }
-
-                if (!config.AppSettings.Settings.AllKeys.Contains("Height"))
-                {
-                    MyDebug.Warn("Height doesn't exist. Setting to 720", "MainForm");
                     config.AppSettings.Settings.Add("Height", "720");
-                }
-
-
-
-                MyDebug.Print(config.AppSettings.Settings["Width"].Value + " " + config.AppSettings.Settings["Height"].Value);
-                width = Convert.ToInt32(config.AppSettings.Settings["Width"].Value);
-                height = Convert.ToInt32(config.AppSettings.Settings["Height"].Value);
-
-                MyDebug.Print("Reading config Settings");
-                List<bool> temp = new List<bool>();
-                if (config.AppSettings.Settings.AllKeys.Contains("Settings"))
-                {
-                    MyDebug.Print("Settings: " + config.AppSettings.Settings["Settings"].Value);
-                    foreach (char c in config.AppSettings.Settings["Settings"].Value)
-                    {
-                        if (c == '0')
-                            temp.Add(false);
-                        else
-                            temp.Add(true);
-                    }
-                }
-                else
-                {
-                    MyDebug.Warn("Settings doesn't exist. Setting to equal 0", "MainForm");
-                    config.AppSettings.Settings.Add("Settings", "0");
-                    temp.Add(false);
-                }
-
-                settings = temp.ToArray();
-
-                MyDebug.Print("Reading config path");
-                if (!config.AppSettings.Settings.AllKeys.Contains("Path"))
-                {
-                    MyDebug.Warn("Path doesn't exist. Setting to " + documentsPath, "MainForm");
                     config.AppSettings.Settings.Add("Path", documentsPath);
+                    config.AppSettings.Settings.Add("Settings", "0");
+                    MyDebug.Error("Configuration Read Fail", "Form1", 51);
+                    MyDebug.Error("Generating Config File", "Form1", 51);
                 }
 
-                this.checkAndTryUpdate();
+                saveFileDialog.InitialDirectory = config.AppSettings.Settings["Path"].Value;
+                openFileDialog.InitialDirectory = config.AppSettings.Settings["Path"].Value;
 
-                MyDebug.Print("Reading config CookbooksLastOpen");
-                if (config.AppSettings.Settings.AllKeys.Contains("CookbooksLastOpen"))
+                config.Save(ConfigurationSaveMode.Modified);
+
+                this.Size = new System.Drawing.Size(width, height);
+
+                //Defines the size of the region used for displaying recipes
+                recipeWidth = this.ClientSize.Width - cookbookTree.Right;
+                recipeHeight = cookbookTree.Height - 10;
+                this.searchBar1.searchBarTextBox.Click += SearchBarTextBox_Click;
+                this.searchBar1.OnSelection += SearchBar_OnSelection;
+                this.searchBar1.UseSearchButton = true;
+                string[] toAdd = Ingredient.OpenIngredientDatabase(appDataPath);
+
+                if (toAdd != null)
                 {
-                    string rawValues = config.AppSettings.Settings["CookbooksLastOpen"].Value;
-                    string[] cookbookAddresses = rawValues.Split('|');
-                    foreach (string address in cookbookAddresses)
-                    {
-                        if(File.Exists(address))
-                        {
-                            OpenCookbook(address);
-                        }
-                        else
-                        {
-                            MyDebug.Warn("File location of cookbook trying to be opened from previous run doesn't exist", "MainForm");
-                        }
-                    }
+                    Ingredient.ingredientDatabase.AddRange(toAdd);
                 }
-                else
+
+                cookbookTree.NodeMouseClick += (sender, args) => cookbookTree.SelectedNode = args.Node;
+
+                if (settings == null)
                 {
-                    MyDebug.Warn("CookbooksLastOpen doesn't exist. Setting to empty", "MainForm");
-                    config.AppSettings.Settings.Add("Path", "");
+                    settings = new bool[] { false };
                 }
             }
-            catch
+            else
             {
-                width = 1080;
-                height = 720;
-                config.AppSettings.Settings.Clear();
-                config.AppSettings.Settings.Add("Width", "1080");
-                config.AppSettings.Settings.Add("Height", "720");
-                config.AppSettings.Settings.Add("Path", documentsPath);
-                config.AppSettings.Settings.Add("Settings", "0");
-                MyDebug.Error("Configuration Read Fail", "Form1", 51);
-                MyDebug.Error("Generating Config File", "Form1", 51);
-            }
-
-            saveFileDialog.InitialDirectory = config.AppSettings.Settings["Path"].Value;
-            openFileDialog.InitialDirectory = config.AppSettings.Settings["Path"].Value;
-
-            config.Save(ConfigurationSaveMode.Modified);
-
-            this.Size = new System.Drawing.Size(width, height);
-
-            //Defines the size of the region used for displaying recipes
-            recipeWidth = this.ClientSize.Width - cookbookTree.Right;
-            recipeHeight = cookbookTree.Height - 10;
-            this.searchBar1.searchBarTextBox.Click += SearchBarTextBox_Click;
-            this.searchBar1.OnSelection += SearchBar_OnSelection;
-            this.searchBar1.UseSearchButton = true;
-            string[] toAdd = Ingredient.OpenIngredientDatabase(appDataPath);
-
-            if (toAdd != null)
-            {
-                Ingredient.ingredientDatabase.AddRange(toAdd);
-            }
-
-            cookbookTree.NodeMouseClick += (sender, args) => cookbookTree.SelectedNode = args.Node;
-
-            if(settings == null)
-            {
-                settings = new bool[] { false }; 
-            }
+                this.Close();
+            }       
             
         }
 
@@ -258,81 +264,84 @@ namespace MyCookbook
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            MyDebug.Print("Saving Ingredients to databse");
-            Ingredient.SaveIngredientDatabase(appDataPath);
-            MyDebug.Print("Ingredients saved!");
-
-            MyDebug.Print("Saving Config Settings");
-            ExeConfigurationFileMap map = new ExeConfigurationFileMap { ExeConfigFilename = configPath };
-            Configuration config = ConfigurationManager.OpenMappedExeConfiguration(map, ConfigurationUserLevel.None);
-
-            config.AppSettings.Settings["Width"].Value = this.Width.ToString();
-            config.AppSettings.Settings["Height"].Value = this.Height.ToString();
-            if (filePath != null)
-                config.AppSettings.Settings["Path"].Value = filePath;
-
-            //Takes each string and combines them with the | delimiter
-            string lastOpenCookbooks = string.Join("|", cookbookFileLocations.Values);
-
-            if (config.AppSettings.Settings.AllKeys.Contains("CookbooksLastOpen"))
+            if (!closedForUpdate)
             {
-                config.AppSettings.Settings["CookbooksLastOpen"].Value = lastOpenCookbooks;
-            }
-            else
-            {
-                config.AppSettings.Settings.Add("CookbooksLastOpen", lastOpenCookbooks);
-            }
+                MyDebug.Print("Saving Ingredients to databse");
+                Ingredient.SaveIngredientDatabase(appDataPath);
+                MyDebug.Print("Ingredients saved!");
 
-            string toSaveSettings = "";
+                MyDebug.Print("Saving Config Settings");
+                ExeConfigurationFileMap map = new ExeConfigurationFileMap { ExeConfigFilename = configPath };
+                Configuration config = ConfigurationManager.OpenMappedExeConfiguration(map, ConfigurationUserLevel.None);
 
-            foreach (bool flag in settings)
-            {
-                if (flag)
-                    toSaveSettings += "1";
-                else
-                    toSaveSettings += "0";
-            }
-            config.AppSettings.Settings["Settings"].Value = toSaveSettings;
+                config.AppSettings.Settings["Width"].Value = this.Width.ToString();
+                config.AppSettings.Settings["Height"].Value = this.Height.ToString();
+                if (filePath != null)
+                    config.AppSettings.Settings["Path"].Value = filePath;
 
-            config.Save();
-            MyDebug.Print("Config Saved!");
+                //Takes each string and combines them with the | delimiter
+                string lastOpenCookbooks = string.Join("|", cookbookFileLocations.Values);
 
-            ConfigurationManager.RefreshSection("appSettings");
-            MyDebug.Print(config.AppSettings.Settings["Width"].Value + " " + config.AppSettings.Settings["Height"].Value);
-
-            MyDebug.Print("Updating Variables");
-            foreach (Recipe rec in loadedRecipes)
-            {
-                rec.UpdateVariables();
-                foreach (Ingredient ing in rec.ingredientList)
+                if (config.AppSettings.Settings.AllKeys.Contains("CookbooksLastOpen"))
                 {
-                    ing.UpdateVariables();
-                }
-            }
-
-            if (needSave)
-            {
-                MyDebug.Print("Close Paused, Save requested");
-                string message = "Any unsaved data will be lost. Do you want to save before you quit?";
-                string caption = "Are you sure you want to quit?";
-                MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel;
-
-                DialogResult result;
-
-                result = MessageBox.Show(message, caption, buttons);
-
-                if (result == DialogResult.Yes)
-                {
-                    saveCookbook();
-                    e.Cancel = needSave;
-                }
-                else if (result == DialogResult.No)
-                {
-                    e.Cancel = false;
+                    config.AppSettings.Settings["CookbooksLastOpen"].Value = lastOpenCookbooks;
                 }
                 else
                 {
-                    e.Cancel = true;
+                    config.AppSettings.Settings.Add("CookbooksLastOpen", lastOpenCookbooks);
+                }
+
+                string toSaveSettings = "";
+
+                foreach (bool flag in settings)
+                {
+                    if (flag)
+                        toSaveSettings += "1";
+                    else
+                        toSaveSettings += "0";
+                }
+                config.AppSettings.Settings["Settings"].Value = toSaveSettings;
+
+                config.Save();
+                MyDebug.Print("Config Saved!");
+
+                ConfigurationManager.RefreshSection("appSettings");
+                MyDebug.Print(config.AppSettings.Settings["Width"].Value + " " + config.AppSettings.Settings["Height"].Value);
+
+                MyDebug.Print("Updating Variables");
+                foreach (Recipe rec in loadedRecipes)
+                {
+                    rec.UpdateVariables();
+                    foreach (Ingredient ing in rec.ingredientList)
+                    {
+                        ing.UpdateVariables();
+                    }
+                }
+
+                if (needSave)
+                {
+                    MyDebug.Print("Close Paused, Save requested");
+                    string message = "Any unsaved data will be lost. Do you want to save before you quit?";
+                    string caption = "Are you sure you want to quit?";
+                    MessageBoxButtons buttons = MessageBoxButtons.YesNoCancel;
+
+                    DialogResult result;
+
+                    result = MessageBox.Show(message, caption, buttons);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        saveCookbook();
+                        e.Cancel = needSave;
+                    }
+                    else if (result == DialogResult.No)
+                    {
+                        e.Cancel = false;
+                    }
+                    else
+                    {
+                        e.Cancel = true;
+                    }
                 }
             }
 
@@ -1602,7 +1611,7 @@ namespace MyCookbook
 
         }
 
-        private void checkAndTryUpdate()
+        private bool checkAndTryUpdate()
         {
             string filePath = "MyCookbookSetup.msi";
 
@@ -1628,9 +1637,12 @@ namespace MyCookbook
                     AutoUpdater.GetUpdate(latestVersion);
                     MyDebug.Print("New versiond downloaded, running installer and closing current application");
                     Process.Start(filePath);
-                    this.Close();
+                    
+                    return true;
                 }
             }
+
+            return false;
         }
 
 

@@ -27,6 +27,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_8AA42268AFDC18A4599141911C991FAC"
+        "OwnerKey" = "8:_E047DF2DA499404096923CD72DF87608"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_E047DF2DA499404096923CD72DF87608"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -35,6 +41,12 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_E047DF2DA499404096923CD72DF87608"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_8AA42268AFDC18A4599141911C991FAC"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -189,6 +201,37 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_8AA42268AFDC18A4599141911C991FAC"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:HtmlAgilityPack, Version=1.4.9.5, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_8AA42268AFDC18A4599141911C991FAC"
+                    {
+                    "Name" = "8:HtmlAgilityPack.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:HtmlAgilityPack.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_F76CFA1C16D142FEBA3FE9C888820410"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
         }
         "FileType"
         {
@@ -278,15 +321,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:MyCookbook"
-        "ProductCode" = "8:{94787011-69AC-4BC4-8BCE-CE5B366D4025}"
-        "PackageCode" = "8:{6D783F41-4619-4E7D-AE35-85AF3E177FED}"
+        "ProductCode" = "8:{8027DDC4-3F54-443B-8991-5F5C1FBA4375}"
+        "PackageCode" = "8:{A5D4F3CB-46D5-4018-9015-2C9D1F0DB129}"
         "UpgradeCode" = "8:{CA1E5A25-8031-42A6-94EC-EA0469BB7F72}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.3.3"
+        "ProductVersion" = "8:1.4.1"
         "Manufacturer" = "8:RJ Wynn"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
