@@ -132,28 +132,7 @@ namespace MyCookbook
                         config.AppSettings.Settings.Add("Path", documentsPath);
                     }
 
-                    MyDebug.Print("Reading config CookbooksLastOpen");
-                    if (config.AppSettings.Settings.AllKeys.Contains("CookbooksLastOpen"))
-                    {
-                        string rawValues = config.AppSettings.Settings["CookbooksLastOpen"].Value;
-                        string[] cookbookAddresses = rawValues.Split('|');
-                        foreach (string address in cookbookAddresses)
-                        {
-                            if (File.Exists(address))
-                            {
-                                OpenCookbook(address);
-                            }
-                            else
-                            {
-                                MyDebug.Warn("File location of cookbook trying to be opened from previous run doesn't exist", "MainForm");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        MyDebug.Warn("CookbooksLastOpen doesn't exist. Setting to empty", "MainForm");
-                        config.AppSettings.Settings.Add("Path", "");
-                    }
+                    
                 }
                 catch
                 {
@@ -193,6 +172,37 @@ namespace MyCookbook
                 if (settings == null)
                 {
                     settings = new bool[] { false };
+                }
+
+                MyDebug.Print("Reading config CookbooksLastOpen");
+                if (config.AppSettings.Settings.AllKeys.Contains("CookbooksLastOpen"))
+                {
+                    string rawValues = config.AppSettings.Settings["CookbooksLastOpen"].Value;
+                    string[] cookbookAddresses = rawValues.Split('|');
+                    foreach (string address in cookbookAddresses)
+                    {
+                        if (File.Exists(address))
+                        {
+                            try
+                            {
+                                OpenCookbook(address);
+                            }
+                            catch (Exception e)
+                            {
+                                MyDebug.Error(e.Message, "MainForm", 150);
+                                throw;
+                            }
+                        }
+                        else
+                        {
+                            MyDebug.Warn("File location of cookbook trying to be opened from previous run doesn't exist", "MainForm");
+                        }
+                    }
+                }
+                else
+                {
+                    MyDebug.Warn("CookbooksLastOpen doesn't exist. Setting to empty", "MainForm");
+                    config.AppSettings.Settings.Add("Path", "");
                 }
             }
             else
@@ -493,43 +503,57 @@ namespace MyCookbook
             if (!needSave || result == DialogResult.Yes)
             {
                 MyDebug.Print("Closing Cookbook: " + currentCookbookNode.Text);
-                cookbookFileLocations.Remove(currentCookbookNode.Text);
-                if (loadedRecipes.Count > 0)
+                try
                 {
-                    List<int> toRemove = new List<int>();
-                    foreach (Recipe rec in loadedRecipes)
+                    MyDebug.Print("Clearing Location");
+                    cookbookFileLocations.Remove(currentCookbookNode.Text);
+                    if (loadedRecipes.Count > 0)
                     {
-                        if (rec.node.Parent.Parent == currentTypeNode)
+                        MyDebug.Print("Getting the indexes for the recipes to remove");
+                        for(int i = 0; i < loadedRecipes.Count; i++)
                         {
-                            toRemove.Add(rec.index);
+                            Recipe rec = loadedRecipes[i];
+                            if (rec.node.Parent.Parent == currentCookbookNode)
+                            {
+                                MyDebug.Print("Closing recipe: " + rec.recipeName);
+                                if (i == currentSelectedRecipeIndex)
+                                {
+                                    currentSelectedRecipeIndex = -1;
+                                }
+                                rec.node.Remove();
+                                rec.SetVisible(false);
+
+                                loadedRecipes.RemoveAt(i);
+                                i--;
+                            }
                         }
-                    }
-                    if (toRemove.Count > 0)
-                    {
-                        foreach (int index in toRemove)
-                        {
-                            MyDebug.Print("Closing recipe: " + loadedRecipes[index].recipeName);
-                            loadedRecipes[index].node.Remove();
-                            loadedRecipes[index].SetVisible(false);
-                            loadedRecipes.RemoveAt(index);
-                        }
+
                     }
 
-                }                
-                
-                cookbookTree.SelectedNode.Remove();
-                currentSelectedRecipeIndex = -1;
+                    MyDebug.Print("Removing node");
+                    currentCookbookNode.Remove();
 
-                if (loadedRecipes.Count > 0)
-                {
-                    Recipe.ResetIndex();
-                    foreach (Recipe rec in loadedRecipes)
+                    if (loadedRecipes.Count > 0)
                     {
-                        rec.ReloadRecipeIndex();
-                        MyDebug.Print("Recipe: " + rec + " index set to " + rec.index);
+                        Recipe.ResetIndex();
+                        foreach (Recipe rec in loadedRecipes)
+                        {
+                            rec.ReloadRecipeIndex();
+                            MyDebug.Print("Recipe: " + rec + " index set to " + rec.index);
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    MyDebug.Error(ex.Message, "closeCookbook", 550);
+                    string message = "Something went wrong";
 
+                    string caption = "Uh oh";
+                    MessageBoxButtons buttons = MessageBoxButtons.OK;
+
+                    MessageBox.Show(message, caption, buttons);
+                }
+                
             }
 
         }
@@ -563,6 +587,10 @@ namespace MyCookbook
                                         currentRec.servings,
                                         currentRec.imageLocation,
                                         false);
+            foreach(Ingredient ing in currentRec.ingredientList)
+            {
+                temp.AddIngredient(ing.name, ing.amount, ing.unitType);
+            }
             MyDebug.Print("Adding recipe panel to form");
             this.Controls.Add(temp.recipePanel);
 
@@ -1028,11 +1056,12 @@ namespace MyCookbook
             MyDebug.Print("Adding recipe panel to form");
             this.Controls.Add(temp.recipePanel);
 
-            MyDebug.Print("Setting selected recipe to the newly added recipe");
-            SelectRecipe(temp);
-
             MyDebug.Print("Adding recipe to recipe list");
             loadedRecipes.Add(temp);
+
+            MyDebug.Print("Setting selected recipe to the newly added recipe");
+            SelectRecipe(temp);
+            
             needSave = true;
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1282,7 +1311,7 @@ namespace MyCookbook
                         byte hours;
                         float minutes, servings;
 
-                        MyDebug.Print("Processing: Recipe " + recipe + 1);
+                        MyDebug.Print("Processing: Recipe " + (recipe + 1));
                         //Creates recipe
                         MyDebug.Print("Processing: Name");
                         name = args[recipeStart];
@@ -1300,7 +1329,7 @@ namespace MyCookbook
                         servings = Convert.ToSingle(args[recipeStart + 6]);
                         MyDebug.Print("Processing: location");
                         location = args[recipeStart + 7];
-                        MyDebug.Print("Creating: Recipe " + recipe + 1);
+                        MyDebug.Print("Creating: Recipe " + (recipe + 1));
 
                         if (location == null)
                             MyDebug.Print("location is null");
@@ -1314,7 +1343,7 @@ namespace MyCookbook
                         //For each ingredient in the recipe
                         for (int ingredient = 0; ingredient < ingredientAmount; ingredient++)
                         {
-                            MyDebug.Print("Processing: Recipe " + ingredient + 1);
+                            MyDebug.Print("Processing: Ingredient " + (ingredient + 1));
                             //Find the starting arg vaule for the ingredient 
                             int ingredientStart = recipeStart + 9     //Posistion of recipe + amount of values needed for recipe
                                                     + ingredient * 3;   //Current ingredient times the amount of values needed for ingredient
@@ -1325,7 +1354,7 @@ namespace MyCookbook
                                                                 args[ingredientStart + 2]                       //Unit
                                                               );
                         }
-                        MyDebug.Print("Finished: Ingredients for recipe " + recipe + 1);
+                        MyDebug.Print("Finished: Ingredients for recipe " + (recipe + 1));
                         //Recalculates the recipe start based off where the ingredients stop
                         recipeStart = recipeStart + 9 + ingredientAmount * 3;
                     }
@@ -1608,6 +1637,7 @@ namespace MyCookbook
 
             MyDebug.Print(String.Format("Setting recipe \"{0}\" with index {1} to visible", rec, rec.index));
             rec.SetVisible(true);
+            rec.ingredientPanel.Visible = true;
 
         }
 
@@ -1643,6 +1673,11 @@ namespace MyCookbook
             }
 
             return false;
+        }
+
+        private void closeCurrentCookbookToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            closeCookbook(sender, e);
         }
 
 

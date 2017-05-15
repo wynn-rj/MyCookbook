@@ -37,6 +37,7 @@ namespace MyCookbook
             this.cookbookToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.typeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.recipeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.recipeFromWebsiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -53,7 +54,7 @@ namespace MyCookbook
             this.printPreviewDialog1 = new System.Windows.Forms.PrintPreviewDialog();
             this.printDocument1 = new System.Drawing.Printing.PrintDocument();
             this.searchBar1 = new MyCookbook.SearchBar();
-            this.recipeFromWebsiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.closeCurrentCookbookToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripHeader.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -75,6 +76,7 @@ namespace MyCookbook
             this.toolStripDropDownFileButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newToolStripMenuItem,
             this.openToolStripMenuItem,
+            this.closeCurrentCookbookToolStripMenuItem,
             this.importToolStripMenuItem,
             this.saveToolStripMenuItem,
             this.printToolStripMenuItem,
@@ -93,7 +95,7 @@ namespace MyCookbook
             this.recipeToolStripMenuItem,
             this.recipeFromWebsiteToolStripMenuItem});
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
             this.newToolStripMenuItem.Text = "New";
             // 
             // cookbookToolStripMenuItem
@@ -117,17 +119,24 @@ namespace MyCookbook
             this.recipeToolStripMenuItem.Text = "Recipe";
             this.recipeToolStripMenuItem.Click += new System.EventHandler(this.recipeToolStripMenuItem_Click);
             // 
+            // recipeFromWebsiteToolStripMenuItem
+            // 
+            this.recipeFromWebsiteToolStripMenuItem.Name = "recipeFromWebsiteToolStripMenuItem";
+            this.recipeFromWebsiteToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+            this.recipeFromWebsiteToolStripMenuItem.Text = "Recipe from website";
+            this.recipeFromWebsiteToolStripMenuItem.Click += new System.EventHandler(this.recipeFromWebsiteToolStripMenuItem_Click);
+            // 
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // importToolStripMenuItem
             // 
             this.importToolStripMenuItem.Name = "importToolStripMenuItem";
-            this.importToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.importToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
             this.importToolStripMenuItem.Text = "Import";
             this.importToolStripMenuItem.Click += new System.EventHandler(this.importToolStripMenuItem_Click);
             // 
@@ -135,7 +144,7 @@ namespace MyCookbook
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeyDisplayString = "";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
             this.saveToolStripMenuItem.Text = "Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
@@ -146,7 +155,7 @@ namespace MyCookbook
             this.printCookbookToolStripItem,
             this.printShoppingListToolStripItem});
             this.printToolStripMenuItem.Name = "printToolStripMenuItem";
-            this.printToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.printToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
             this.printToolStripMenuItem.Text = "Print";
             // 
             // printRecipeToolStripItem
@@ -173,14 +182,14 @@ namespace MyCookbook
             // settingsToolStripMenuItem
             // 
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
             this.settingsToolStripMenuItem.Text = "Settings";
             this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -246,12 +255,12 @@ namespace MyCookbook
             this.searchBar1.TabIndex = 2;
             this.searchBar1.UseSearchButton = false;
             // 
-            // recipeFromWebsiteToolStripMenuItem
+            // closeCurrentCookbookToolStripMenuItem
             // 
-            this.recipeFromWebsiteToolStripMenuItem.Name = "recipeFromWebsiteToolStripMenuItem";
-            this.recipeFromWebsiteToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
-            this.recipeFromWebsiteToolStripMenuItem.Text = "Recipe from website";
-            this.recipeFromWebsiteToolStripMenuItem.Click += new System.EventHandler(this.recipeFromWebsiteToolStripMenuItem_Click);
+            this.closeCurrentCookbookToolStripMenuItem.Name = "closeCurrentCookbookToolStripMenuItem";
+            this.closeCurrentCookbookToolStripMenuItem.Size = new System.Drawing.Size(204, 22);
+            this.closeCurrentCookbookToolStripMenuItem.Text = "Close Current Cookbook";
+            this.closeCurrentCookbookToolStripMenuItem.Click += new System.EventHandler(this.closeCurrentCookbookToolStripMenuItem_Click);
             // 
             // MainForm
             // 
@@ -302,6 +311,7 @@ namespace MyCookbook
         private System.Windows.Forms.ToolStripMenuItem printShoppingListToolStripItem;
         private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem recipeFromWebsiteToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem closeCurrentCookbookToolStripMenuItem;
     }
 }
 
