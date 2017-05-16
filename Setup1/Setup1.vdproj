@@ -46,13 +46,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_8AA42268AFDC18A4599141911C991FAC"
+        "OwnerKey" = "8:_541DFCCD5E465BB4061A7EFAE93633BE"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_541DFCCD5E465BB4061A7EFAE93633BE"
+        "OwnerKey" = "8:_8AA42268AFDC18A4599141911C991FAC"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -177,11 +177,6 @@
             "AssemblyAsmDisplayName" = "8:System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"
                 "ScatterAssemblies"
                 {
-                    "_541DFCCD5E465BB4061A7EFAE93633BE"
-                    {
-                    "Name" = "8:System.Net.Http.dll"
-                    "Attributes" = "3:512"
-                    }
                 }
             "SourcePath" = "8:System.Net.Http.dll"
             "TargetName" = "8:"
@@ -208,11 +203,6 @@
             "AssemblyAsmDisplayName" = "8:HtmlAgilityPack, Version=1.4.9.5, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_8AA42268AFDC18A4599141911C991FAC"
-                    {
-                    "Name" = "8:HtmlAgilityPack.dll"
-                    "Attributes" = "3:512"
-                    }
                 }
             "SourcePath" = "8:HtmlAgilityPack.dll"
             "TargetName" = "8:"
@@ -321,15 +311,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:MyCookbook"
-        "ProductCode" = "8:{996BB3AE-0DF6-418A-B074-D0972CAD34B4}"
-        "PackageCode" = "8:{C5DA9589-611E-441D-B7C2-B8254CC2E82C}"
+        "ProductCode" = "8:{F6BAA09D-82C8-40AE-9EA8-9A63D0A36751}"
+        "PackageCode" = "8:{E15BFA04-5678-4935-9868-2E2496253BF0}"
         "UpgradeCode" = "8:{CA1E5A25-8031-42A6-94EC-EA0469BB7F72}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.4.2"
+        "ProductVersion" = "8:1.4.3"
         "Manufacturer" = "8:RJ Wynn"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

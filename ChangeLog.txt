@@ -1,15 +1,31 @@
-Version 1.4.2.0 (Last Release)
+Version 1.4.3.0 (Last Release)
+
+Update Notes:
+
+Additions:
+ - Added more websites that recipes can be imported from
+	- foodnetwork.com
+	- epicurious.com
+	- myrecipes.com
+	- centercutcook.com
+	- simplyrecipes.com
+	- wilton.com
+	- macheesmo.com
+ 
+ 
+Version 1.4.2.0
 
 Update Notes:
 
 Additions:
  - Added close cookbook button to File ToolStrip
 Fixes:
- - Fixed recipes not loading when cookbook was openened during startup
+ - Fixed recipes not loading when cookbook was opened during startup
  - Fixed recipe losing ingredients when moving types
  - Fixed null exception that could occur when closing a cookbook
  - Fixed recipes not being removed when cookbook was closed
 
+ 
 Version 1.4.1.0
 
 Update Notes:

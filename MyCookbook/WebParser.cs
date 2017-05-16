@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace MyCookbook
 {
@@ -9,12 +10,37 @@ namespace MyCookbook
         private static char[] TRIM_CHARS = { '\n', '\t', ' ', '\r', '\f' };
         public const char SEPERATOR = '|';
         public const string STEP_SEPERATOR = "||STEPS||";
-        
+
 
         public static string[] ParseSite(string url)
         {
             HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(url);
+            HtmlDocument doc = null;
+            try
+            {
+                doc = web.Load(url);
+            }
+            catch (Exception e)
+            {
+                if (e.Message.Equals(@"'gzip' is not a supported encoding name. For information on defining a custom encoding, see the documentation for the Encoding.RegisterProvider method.
+Parameter name: name"))
+                {
+                    string html;
+                    using (WebClient wc = new GZipWebClient())
+                    {
+                        html = wc.DownloadString(url);
+                    }
+
+                    doc = new HtmlDocument();
+                    doc.LoadHtml(html);
+                }
+                else
+                {
+                    throw e;
+                }
+
+            }
+
             string[] parsedSiteInfo;
 
             if (url.ToLower().Contains("bettycrocker"))
@@ -32,6 +58,34 @@ namespace MyCookbook
             else if (url.ToLower().Contains("food.com"))
             {
                 parsedSiteInfo = ParseFoodCom(doc, url.Substring(url.LastIndexOf('-') + 1));
+            }
+            else if (url.ToLower().Contains("foodnetwork"))
+            {
+                parsedSiteInfo = ParseFoodNetwork(doc);
+            }
+            else if (url.ToLower().Contains("epicurious"))
+            {
+                parsedSiteInfo = ParseEpicurious(doc);
+            }
+            else if (url.ToLower().Contains("myrecipes"))
+            {
+                parsedSiteInfo = ParseMyrecipes(doc);
+            }
+            else if (url.ToLower().Contains("centercutcook"))
+            {
+                parsedSiteInfo = ParseCenterCutCook(doc);
+            }
+            else if (url.ToLower().Contains("simplyrecipes"))
+            {
+                parsedSiteInfo = ParseSimplyRecipes(doc);
+            }
+            else if (url.ToLower().Contains("wilton"))
+            {
+                parsedSiteInfo = ParseWilton(doc);
+            }
+            else if (url.ToLower().Contains("macheesmo"))
+            {
+                parsedSiteInfo = ParseMacheesmo(doc);
             }
             else
             {
@@ -208,7 +262,6 @@ namespace MyCookbook
 
 
             string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[0].InnerText;
-            HtmlNodeCollection h = doc.DocumentNode.SelectNodes(imageNode);
             string img = doc.DocumentNode.SelectNodes(imageNode)[0].InnerHtml;
 
             ingredients.Add(recipeName);
@@ -285,7 +338,6 @@ namespace MyCookbook
 
 
             string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[0].InnerText;
-            HtmlNodeCollection h = doc.DocumentNode.SelectNodes(imageNode);
             string img = doc.DocumentNode.SelectNodes(imageNode)[0].InnerHtml.Split(new string[] { "/convert" }, StringSplitOptions.RemoveEmptyEntries)[0];
 
             ingredients.Add(recipeName);
@@ -360,6 +412,608 @@ namespace MyCookbook
             return ingredients.ToArray();
         }
 
+        private static string[] ParseFoodNetwork(HtmlDocument doc)
+        {
+            string recipeNameNode = "/html/head/title";
+            string imageNode = "/html/head/meta";
+            string ingredientAndDirectionTextNode = "/html/head/script";
+            int index = -1;
+
+            List<string> ingredients = new List<string>();
+
+            string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[0].InnerText;
+            string img = doc.DocumentNode.SelectNodes(imageNode)[11].GetAttributeValue("content", "");
+
+            ingredients.Add(recipeName);
+            ingredients.Add("ImgSrc" + SEPERATOR + img);
+
+            HtmlNodeCollection scripts = doc.DocumentNode.SelectNodes(ingredientAndDirectionTextNode);
+            string scriptWithRecipeInfo = "";
+            foreach (HtmlNode h in scripts)
+            {
+                if (h.InnerText.Contains("recipeIngredient"))
+                {
+                    scriptWithRecipeInfo = h.InnerText;
+                }
+            }
+
+            string[] splitScript = scriptWithRecipeInfo.Trim(' ', '{', '}').Split('[', ']');
+
+            int j = 0;
+            foreach (string s in splitScript)
+            {
+                s.Trim(' ', '\n', '\"');
+                if (s.Contains("recipeIngredient"))
+                {
+                    index = j;
+                }
+                j++;
+            }
+            string[] ing = splitScript[index + 1].Split(new string[] { "\"," }, StringSplitOptions.RemoveEmptyEntries);
+            string[] instructions = splitScript[index + 3].Split(new string[] { "\"," }, StringSplitOptions.RemoveEmptyEntries);
+
+            for (int i = 0; i < ing.Length; i++)
+            {
+                string s = ing[i].Trim(TRIM_CHARS).Trim('\"');
+                if (!s.Equals(""))
+                {
+                    if (s.IndexOf(' ') != -1)
+                    {
+                        if (IsDigitOrSlashOnly(s.Substring(0, s.IndexOf(' '))))
+                        {
+                            ingredients.Add(s.Substring(0, s.IndexOf(' ')) + SEPERATOR + s.Substring(s.IndexOf(' ') + 1).Trim(TRIM_CHARS));
+                        }
+                        else
+                        {
+                            ingredients.Add(s);
+                        }
+                    }
+                    else
+                    {
+                        ingredients.Add(s);
+                    }
+
+                }
+            }
+
+            for (int i = 0; i < instructions.Length; i++)
+            {
+                string s = instructions[i].Trim(TRIM_CHARS).Trim('\"');
+                if (!s.Equals(""))
+                {
+                    ingredients.Add(s);
+                }
+            }
+
+            return ingredients.ToArray();
+        }
+
+        private static string[] ParseEpicurious(HtmlDocument doc)
+        {
+            string recipeNameNode = @"/html/head/meta";
+            string imageNode = @"/html/head/meta";
+            string ingredientTextNode = @"/html[1]/body[1]/div[2]/div[1]/div[2]/div[1]/div[1]/div[4]/div[1]/div[2]/ol[1]/li[{0}]/ul/li[{1}]";
+            string stepsNode = @"/html[1]/body[1]/div[2]/div[1]/div[2]/div[1]/div[1]/div[4]/div[1]/div[3]/ol[1]/li[{0}]";
+
+            int index;
+
+            List<string> ingredients = new List<string>();
+
+            HtmlNode hx = doc.DocumentNode.SelectNodes("/html[1]/body[1]/div[2]/div[1]/div[2]/div[1]/div[1]/div[4]/div[1]/div[3]")[0];
+
+
+            string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[21].GetAttributeValue("content", "");
+            string img = doc.DocumentNode.SelectNodes(imageNode)[26].GetAttributeValue("content", "");
+
+            ingredients.Add(recipeName);
+            ingredients.Add("ImgSrc" + SEPERATOR + img);
+
+
+            index = 1;
+            int colIndex = 1;
+            bool isIngredients = true;
+
+            while (isIngredients)
+            {
+                HtmlNodeCollection textNode = doc.DocumentNode.SelectNodes(String.Format(ingredientTextNode, colIndex, index));
+
+                if (textNode != null)
+                {
+                    for (int i = 0; i < textNode.Count; i++)
+                    {
+                        string ing = textNode[i].InnerText.Trim(TRIM_CHARS);
+                        if (!ing.Equals("Add all ingredients to list"))
+                        {
+                            if (IsDigitOrSlashOnly(ing.Substring(0, ing.IndexOf(' '))))
+                            {
+                                ingredients.Add(ing.Substring(0, ing.IndexOf(' ')) + SEPERATOR + ing.Substring(ing.IndexOf(' ') + 1));
+                            }
+                            else
+                            {
+                                ingredients.Add(ing);
+                            }
+                        }
+                    }
+                    index++;
+                }
+                else
+                {
+                    if (index == 1)
+                    {
+                        isIngredients = false;
+                    }
+                    else
+                    {
+                        colIndex++;
+                        index = 1;
+                    }
+                }
+
+            }
+
+            ingredients.Add(STEP_SEPERATOR);
+            bool isSteps = true;
+            index = 1;
+
+            while (isSteps)
+            {
+                HtmlNodeCollection steps = doc.DocumentNode.SelectNodes(String.Format(stepsNode, index));
+
+                if (steps != null)
+                {
+                    string step = steps[0].InnerText.Trim(TRIM_CHARS);
+                    if (!step.Equals(""))
+                    {
+                        ingredients.Add(step);
+                    }
+                    index++;
+                }
+                else
+                {
+                    isSteps = false;
+                }
+
+            }
+
+            return ingredients.ToArray();
+        }
+
+        private static string[] ParseMyrecipes(HtmlDocument doc)
+        {
+            string recipeNameNode = @"//*[@id=""block-system-main""]/div/div[2]/div/div[3]/div/div/div/h1";
+            string imageNode = @"//*[@id=""block-system-main""]/div/div[3]/main/header/div[2]/div/div/div/figure/div/img";
+            string ingredientTextNode = @"//*[@id=""block-system-main""]/div/div[3]/main/div[1]/div[1]/div[1]/div/div/ul/li[{0}]";
+            string stepsNode = @"//*[@id=""block-system-main""]/div/div[3]/main/div[1]/div[2]/div[1]/div/div/ol/li[{0}]/div/p";
+
+            int index;
+
+            List<string> ingredients = new List<string>();
+
+
+            string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[0].InnerText;
+            string img = doc.DocumentNode.SelectNodes(imageNode)[0].GetAttributeValue("src", "").Split('?')[0];
+
+            ingredients.Add(recipeName);
+            ingredients.Add("ImgSrc" + SEPERATOR + img);
+
+
+            index = 1;
+            bool isIngredients = true;
+
+            while (isIngredients)
+            {
+                HtmlNodeCollection textNode = doc.DocumentNode.SelectNodes(String.Format(ingredientTextNode, index));
+
+                if (textNode != null)
+                {
+                    for (int i = 0; i < textNode.Count; i++)
+                    {
+                        string ing = textNode[i].InnerText.Trim(TRIM_CHARS);
+                        if (!ing.Equals(""))
+                        {
+                            if (ing.IndexOf(' ') != -1)
+                            {
+                                if (IsDigitOrSlashOnly(ing.Substring(0, ing.IndexOf(' '))))
+                                {
+                                    ingredients.Add(ing.Substring(0, ing.IndexOf(' ')) + SEPERATOR + ing.Substring(ing.IndexOf(' ') + 1).Trim(TRIM_CHARS));
+                                }
+                                else
+                                {
+                                    ingredients.Add(ing);
+                                }
+                            }
+                            else
+                            {
+                                ingredients.Add(ing);
+                            }
+
+                        }
+                    }
+                    index++;
+                }
+                else
+                {
+                    isIngredients = false;
+                }
+
+            }
+
+            ingredients.Add(STEP_SEPERATOR);
+            bool isSteps = true;
+            index = 1;
+
+            while (isSteps)
+            {
+                HtmlNodeCollection steps = doc.DocumentNode.SelectNodes(String.Format(stepsNode, index));
+
+                if (steps != null)
+                {
+                    string step = steps[0].InnerText.Trim(TRIM_CHARS);
+                    if (!step.Equals("") && !step.Equals("Submit a Correction"))
+                    {
+                        ingredients.Add(step);
+                    }
+                    index++;
+                }
+                else
+                {
+                    isSteps = false;
+                }
+
+            }
+
+            return ingredients.ToArray();
+        }
+
+        private static string[] ParseCenterCutCook(HtmlDocument doc)
+        {
+            string recipeNameNode = @"//*[@id=""content""]/div[2]/div[1]/div[8]/h2/a";
+            string imageNode = @"//*[@id=""content""]/div[2]/div[1]/div[8]/p/img";
+            string ingredientTextNode = @"//*[@id=""content""]/div[2]/div[1]/div[8]/ul/li[{0}]";
+            string stepsNode = @"//*[@id=""content""]/div[2]/div[1]/div[8]/ol/li[{0}]";
+
+            int index;
+
+            List<string> ingredients = new List<string>();
+
+
+            string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[0].InnerText;
+            string img = doc.DocumentNode.SelectNodes(imageNode)[0].GetAttributeValue("src", "").Split('?')[0];
+
+            ingredients.Add(recipeName);
+            ingredients.Add("ImgSrc" + SEPERATOR + img);
+
+
+            index = 1;
+            bool isIngredients = true;
+
+            while (isIngredients)
+            {
+                HtmlNodeCollection textNode = doc.DocumentNode.SelectNodes(String.Format(ingredientTextNode, index));
+
+                if (textNode != null)
+                {
+                    for (int i = 0; i < textNode.Count; i++)
+                    {
+                        string ing = textNode[i].InnerText.Trim(TRIM_CHARS);
+                        if (!ing.Equals(""))
+                        {
+                            if (ing.IndexOf(' ') != -1)
+                            {
+                                if (IsDigitOrSlashOnly(ing.Substring(0, ing.IndexOf(' '))))
+                                {
+                                    ingredients.Add(ing.Substring(0, ing.IndexOf(' ')) + SEPERATOR + ing.Substring(ing.IndexOf(' ') + 1).Trim(TRIM_CHARS));
+                                }
+                                else
+                                {
+                                    ingredients.Add(ing);
+                                }
+                            }
+                            else
+                            {
+                                ingredients.Add(ing);
+                            }
+
+                        }
+                    }
+                    index++;
+                }
+                else
+                {
+                    isIngredients = false;
+                }
+
+            }
+
+            ingredients.Add(STEP_SEPERATOR);
+            bool isSteps = true;
+            index = 1;
+
+            while (isSteps)
+            {
+                HtmlNodeCollection steps = doc.DocumentNode.SelectNodes(String.Format(stepsNode, index));
+
+                if (steps != null)
+                {
+                    string step = steps[0].InnerText.Trim(TRIM_CHARS);
+                    if (!step.Equals("") && !step.Equals("Submit a Correction"))
+                    {
+                        ingredients.Add(step);
+                    }
+                    index++;
+                }
+                else
+                {
+                    isSteps = false;
+                }
+
+            }
+
+            return ingredients.ToArray();
+        }
+
+        private static string[] ParseSimplyRecipes(HtmlDocument doc)
+        {
+            string recipeNameNode = @"//*[@id=""content""]/article/header/h1";
+            string imageNode = @"//*[@id=""content""]/article/div[1]/div[2]/img";
+            string ingredientTextNode = @"//*[@id=""content""]/article/div[1]/div[8]/div[3]/ul/li[{0}]";
+            string stepsNode = @"//*[@id=""content""]/article/div[1]/div[8]/div[5]/div/p[{0}]";
+
+            int index;
+
+            List<string> ingredients = new List<string>();
+
+
+            string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[0].InnerText;
+            string img = doc.DocumentNode.SelectNodes(imageNode)[0].GetAttributeValue("src", "").Split('?')[0];
+
+            ingredients.Add(recipeName);
+            ingredients.Add("ImgSrc" + SEPERATOR + img);
+
+
+            index = 1;
+            bool isIngredients = true;
+
+            while (isIngredients)
+            {
+                HtmlNodeCollection textNode = doc.DocumentNode.SelectNodes(String.Format(ingredientTextNode, index));
+
+                if (textNode != null)
+                {
+                    for (int i = 0; i < textNode.Count; i++)
+                    {
+                        string ing = textNode[i].InnerText.Trim(TRIM_CHARS);
+                        if (!ing.Equals(""))
+                        {
+                            if (ing.IndexOf(' ') != -1)
+                            {
+                                if (IsDigitOrSlashOnly(ing.Substring(0, ing.IndexOf(' '))))
+                                {
+                                    ingredients.Add(ing.Substring(0, ing.IndexOf(' ')) + SEPERATOR + ing.Substring(ing.IndexOf(' ') + 1).Trim(TRIM_CHARS));
+                                }
+                                else
+                                {
+                                    ingredients.Add(ing);
+                                }
+                            }
+                            else
+                            {
+                                ingredients.Add(ing);
+                            }
+
+                        }
+                    }
+                    index++;
+                }
+                else
+                {
+                    isIngredients = false;
+                }
+
+            }
+
+            ingredients.Add(STEP_SEPERATOR);
+            bool isSteps = true;
+            index = 1;
+
+            while (isSteps)
+            {
+                HtmlNodeCollection steps = doc.DocumentNode.SelectNodes(String.Format(stepsNode, index));
+
+                if (steps != null)
+                {
+                    string step = steps[0].InnerText.Trim(TRIM_CHARS);
+                    if (!step.Equals("") && !step.Equals("Submit a Correction"))
+                    {
+                        ingredients.Add(step);
+                    }
+                    index++;
+                }
+                else
+                {
+                    isSteps = false;
+                }
+
+            }
+
+            return ingredients.ToArray();
+        }
+
+        private static string[] ParseWilton(HtmlDocument doc)
+        {
+            string recipeNameNode = @"//*[@id=""pdpMain""]/div[2]/h1";
+            string imageNode = @"//*[@id=""pdpMain""]/div[1]/div[1]/img";
+            string ingredientTextNode = @"//*[@id=""tab2""]/div[4]/div[{0}]/div[2]/h1";
+            string stepsNode = @"//*[@id=""tab1""]/div[1]/div[{0}]/div/div/p";
+
+            int index;
+
+            List<string> ingredients = new List<string>();
+
+
+            string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[0].InnerText;
+            string img = doc.DocumentNode.SelectNodes(imageNode)[0].GetAttributeValue("src", "").Split('?')[0];
+
+            ingredients.Add(recipeName);
+            ingredients.Add("ImgSrc" + SEPERATOR + img);
+
+
+            index = 1;
+            bool isIngredients = true;
+
+            while (isIngredients)
+            {
+                HtmlNodeCollection textNode = doc.DocumentNode.SelectNodes(String.Format(ingredientTextNode, index));
+
+                if (textNode != null)
+                {
+                    for (int i = 0; i < textNode.Count; i++)
+                    {
+                        string ing = textNode[i].InnerText.Trim(TRIM_CHARS).Replace('\n', ' ');
+                        if (!ing.Equals(""))
+                        {
+                            if (ing.IndexOf(' ') != -1)
+                            {
+                                if (IsDigitOrSlashOnly(ing.Substring(0, ing.IndexOf(' '))))
+                                {
+                                    ingredients.Add(ing.Substring(0, ing.IndexOf(' ')) + SEPERATOR + ing.Substring(ing.IndexOf(' ') + 1).Trim(TRIM_CHARS));
+                                }
+                                else
+                                {
+                                    ingredients.Add(ing);
+                                }
+                            }
+                            else
+                            {
+                                ingredients.Add(ing);
+                            }
+
+                        }
+                    }
+                    index++;
+                }
+                else
+                {
+                    isIngredients = false;
+                }
+
+            }
+
+            ingredients.Add(STEP_SEPERATOR);
+            bool isSteps = true;
+            index = 1;
+
+            while (isSteps)
+            {
+                HtmlNodeCollection steps = doc.DocumentNode.SelectNodes(String.Format(stepsNode, index));
+
+                if (steps != null)
+                {
+                    string step = steps[0].InnerText.Trim(TRIM_CHARS);
+                    if (!step.Equals("") && !step.Equals("Submit a Correction"))
+                    {
+                        ingredients.Add(step);
+                    }
+                    index++;
+                }
+                else
+                {
+                    isSteps = false;
+                }
+
+            }
+
+            return ingredients.ToArray();
+        }
+
+        private static string[] ParseMacheesmo(HtmlDocument doc)
+        {
+            string recipeNameNode = @"//*[@id=""main""]/article/div/div[2]/h1";
+            string imageNode = @"//*[@id=""main""]/article/header/div/img";
+            string ingredientTextNode = @"//*[@id=""recipe-1""]/header/div[4]/div[{0}]";
+            string stepsNode = @"//*[@id=""recipe-1""]/div/p[{0}]";
+
+
+            int index;
+
+            List<string> ingredients = new List<string>();
+
+
+            string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[0].InnerText;
+            string img = doc.DocumentNode.SelectNodes(imageNode)[0].GetAttributeValue("src", "").Split('?')[0];
+
+            ingredients.Add(recipeName);
+            ingredients.Add("ImgSrc" + SEPERATOR + img);
+
+
+            index = 1;
+            bool isIngredients = true;
+
+            while (isIngredients)
+            {
+                HtmlNodeCollection textNode = doc.DocumentNode.SelectNodes(String.Format(ingredientTextNode, index));
+
+                if (textNode != null)
+                {
+                    for (int i = 0; i < textNode.Count; i++)
+                    {
+                        string ing = textNode[i].InnerText.Trim(TRIM_CHARS);
+                        if (!ing.Equals(""))
+                        {
+                            if (ing.IndexOf(' ') != -1)
+                            {
+                                if (IsDigitOrSlashOnly(ing.Substring(0, ing.IndexOf(' '))))
+                                {
+                                    ingredients.Add(ing.Substring(0, ing.IndexOf(' ')) + SEPERATOR + ing.Substring(ing.IndexOf(' ') + 1).Trim(TRIM_CHARS));
+                                }
+                                else
+                                {
+                                    ingredients.Add(ing);
+                                }
+                            }
+                            else
+                            {
+                                ingredients.Add(ing);
+                            }
+
+                        }
+                    }
+                    index++;
+                }
+                else
+                {
+                    isIngredients = false;
+                }
+
+            }
+
+            ingredients.Add(STEP_SEPERATOR);
+            bool isSteps = true;
+            index = 1;
+
+            while (isSteps)
+            {
+                HtmlNodeCollection steps = doc.DocumentNode.SelectNodes(String.Format(stepsNode, index));
+
+                if (steps != null)
+                {
+                    string step = steps[0].InnerText.Trim(TRIM_CHARS);
+                    if (!step.Equals("") && !step.Equals("Submit a Correction"))
+                    {
+                        ingredients.Add(step);
+                    }
+                    index++;
+                }
+                else
+                {
+                    isSteps = false;
+                }
+
+            }
+
+            return ingredients.ToArray();
+        }
+
         private static bool IsDigitOrSlashOnly(string str)
         {
             foreach (char c in str)
@@ -376,6 +1030,15 @@ namespace MyCookbook
             return true;
         }
 
+    }
 
+    class GZipWebClient : WebClient
+    {
+        protected override WebRequest GetWebRequest(Uri address)
+        {
+            HttpWebRequest request = (HttpWebRequest)base.GetWebRequest(address);
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            return request;
+        }
     }
 }
