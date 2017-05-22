@@ -81,6 +81,12 @@
     </Compile>
     <Compile Include="AutoUpdater.cs" />
     <Compile Include="EventControls.cs" />
+    <Compile Include="WebPagePasswordRequestDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="WebPagePasswordRequestDialog.Designer.cs">
+      <DependentUpon>WebPagePasswordRequestDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="WebPageUrlRequestDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -145,6 +151,9 @@
     </Compile>
     <EmbeddedResource Include="SearchBar.resx">
       <DependentUpon>SearchBar.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="WebPagePasswordRequestDialog.resx">
+      <DependentUpon>WebPagePasswordRequestDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="WebPageUrlRequestDialog.resx">
       <DependentUpon>WebPageUrlRequestDialog.cs</DependentUpon>

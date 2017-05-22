@@ -1,7 +1,11 @@
 ﻿using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.IO;
 using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MyCookbook
 {
@@ -86,6 +90,14 @@ Parameter name: name"))
             else if (url.ToLower().Contains("macheesmo"))
             {
                 parsedSiteInfo = ParseMacheesmo(doc);
+            }
+            else if (url.ToLower().Contains("cooksillustrated"))
+            {
+                WebPagePasswordRequestDialog usrPswdDialog = new WebPagePasswordRequestDialog();
+                usrPswdDialog.ShowDialog();
+                string username = usrPswdDialog.usernameTextBox.Text;
+                string password = usrPswdDialog.passwordTextBox.Text;
+                parsedSiteInfo = ParseCooksIllustrated(url, username, password);
             }
             else
             {
@@ -1014,6 +1026,125 @@ Parameter name: name"))
             return ingredients.ToArray();
         }
 
+        private static string[] ParseCooksIllustrated(string url, string username, string password)
+        {
+            string recipeNameNode = @"/html/head/title";
+            string imageNode = @"/html/head/meta";
+            string ingredientTextNode = @"/html/body/div[3]/main/div[2]/div[2]/div/div[1]/div[2]/div[{0}]/table[{1}]/tbody/tr";
+            string stepsNode = @"/html/body/div[3]/main/div[2]/div[2]/div/div[2]/div[2]/p[{0}]";
+
+            var cookieJar = new CookieContainer();
+            CookieAwareWebClient client = new CookieAwareWebClient(cookieJar);
+
+            // the website sets some cookie that is needed for login, and as well the 'authenticity_token' is always different
+            string response = client.DownloadString("https://www.cooksillustrated.com/sign_in");
+
+            // parse the 'authenticity_token' and cookie is auto handled by the cookieContainer
+            string token = Regex.Match(response, "authenticity_token.+?value=\"(.+?)\"").Groups[1].Value;
+            NameValueCollection values = new NameValueCollection{
+                    {"utf8", "✓" },
+                    {"authenticity_token", token },
+                    { "user[email]", username},
+                    {"user[password]", password }
+                };
+
+            //string postData = string.Format("utf8=%E2%9C%93&authenticity_token={0}&user%5Bemail%5D=wynnpublic@gmail.com&user%5Bpassword%5D=caspian1", token);
+
+
+            //WebClient.UploadValues is equivalent of Http url-encode type post
+            client.Method = "POST";
+            //response = client.UploadString("https://www.cooksillustrated.com/sessions", postData);
+            client.UploadValues("https://www.cooksillustrated.com/sessions", "POST", values);
+
+            string html = client.DownloadString(url);
+
+
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(html);
+
+            int index;
+
+            List<string> ingredients = new List<string>();
+
+
+            string recipeName = doc.DocumentNode.SelectNodes(recipeNameNode)[0].InnerText;
+            string img = doc.DocumentNode.SelectNodes(imageNode)[9].GetAttributeValue("content", "").Split('?')[0];
+
+            HtmlNodeCollection n = doc.DocumentNode.SelectNodes("/html/body/div[3]/main/div[2]/div[2]/div/div[1]");
+
+            ingredients.Add(recipeName);
+            ingredients.Add("ImgSrc" + SEPERATOR + img);
+
+            index = 1;
+            int colIndex = 1;
+            bool isIngredients = true;
+
+            while (isIngredients)
+            {
+                HtmlNodeCollection textNode = doc.DocumentNode.SelectNodes(String.Format(ingredientTextNode, colIndex, index));
+
+                if (textNode != null)
+                {
+                    for (int i = 0; i < textNode.Count; i++)
+                    {
+                        string ing = textNode[i].InnerText.Trim(TRIM_CHARS).Replace('\n', ' ').Replace("&frac12;", "1/2").Replace("&frac14;", "1/4").Replace("&frac34;", "3/4").Replace("&frac13;", "1/3");
+                        if (!ing.Equals(""))
+                        {
+                            if (IsDigitOrSlashOnly(ing.Substring(0, ing.IndexOf(' '))))
+                            {
+                                ingredients.Add(ing.Substring(0, ing.IndexOf(' ')) + SEPERATOR + ing.Substring(ing.IndexOf(' ') + 1).Trim(TRIM_CHARS));
+                            }
+                            else
+                            {
+                                ingredients.Add(ing);
+                            }
+                        }
+                    }
+                    index++;
+                }
+                else
+                {
+                    if (index == 1)
+                    {
+                        isIngredients = false;
+                    }
+                    else
+                    {
+                        colIndex++;
+                        index = 1;
+                    }
+                }
+
+            }
+
+            ingredients.Add(STEP_SEPERATOR);
+            bool isSteps = true;
+            index = 1;
+
+            while (isSteps)
+            {
+                HtmlNodeCollection steps = doc.DocumentNode.SelectNodes(String.Format(stepsNode, index));
+
+                if (steps != null)
+                {
+                    string step = steps[0].InnerText.Trim(TRIM_CHARS);
+                    if (!step.Equals(""))
+                    {
+                        ingredients.Add(step);
+                    }
+                    index++;
+                }
+                else
+                {
+                    isSteps = false;
+                }
+
+            }
+
+            return ingredients.ToArray();
+        }
+
+
         private static bool IsDigitOrSlashOnly(string str)
         {
             foreach (char c in str)
@@ -1039,6 +1170,73 @@ Parameter name: name"))
             HttpWebRequest request = (HttpWebRequest)base.GetWebRequest(address);
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             return request;
+        }
+    }
+
+    class CookieAwareWebClient : WebClient
+    {
+        public string Method;
+        public CookieContainer CookieContainer { get; set; }
+        public Uri Uri { get; set; }
+
+        public CookieAwareWebClient()
+            : this(new CookieContainer())
+        {
+        }
+
+        public CookieAwareWebClient(CookieContainer cookies)
+        {
+            this.CookieContainer = cookies;
+        }
+
+        protected override WebRequest GetWebRequest(Uri address)
+        {
+            WebRequest request = base.GetWebRequest(address);
+            if (request is HttpWebRequest)
+            {
+                (request as HttpWebRequest).CookieContainer = this.CookieContainer;
+                (request as HttpWebRequest).ServicePoint.Expect100Continue = false;
+                (request as HttpWebRequest).UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0";
+                (request as HttpWebRequest).Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+                (request as HttpWebRequest).Headers.Add(HttpRequestHeader.AcceptLanguage, "en-US,en;q=0.5");
+                (request as HttpWebRequest).Referer = "http://portal.movable.com/signin";
+                (request as HttpWebRequest).KeepAlive = true;
+                (request as HttpWebRequest).AutomaticDecompression = DecompressionMethods.Deflate |
+                                                                     DecompressionMethods.GZip;
+                if (Method == "POST")
+                {
+                    (request as HttpWebRequest).ContentType = "application/x-www-form-urlencoded";
+                }
+
+            }
+            HttpWebRequest httpRequest = (HttpWebRequest)request;
+            httpRequest.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            return httpRequest;
+        }
+
+        protected override WebResponse GetWebResponse(WebRequest request)
+        {
+            WebResponse response = base.GetWebResponse(request);
+            String setCookieHeader = response.Headers[HttpResponseHeader.SetCookie];
+
+            if (setCookieHeader != null)
+            {
+                //do something if needed to parse out the cookie.
+                try
+                {
+                    if (setCookieHeader != null)
+                    {
+                        Cookie cookie = new Cookie(); //create cookie
+                        this.CookieContainer.Add(cookie);
+                    }
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+            return response;
+
         }
     }
 }

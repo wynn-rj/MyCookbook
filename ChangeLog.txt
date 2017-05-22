@@ -1,4 +1,13 @@
-Version 1.4.4.0 (Last Release)
+Version 1.4.5.0 (Last Release)
+
+Update Notes:
+
+Additions:
+ - Added more websites that recipes can be imported from
+	- cooksillustrated
+ - Added the funtionality for requesting a username and password for a website and then connecting to that website with that username and password
+
+Version 1.4.4.0
 
 Update Notes:
 
