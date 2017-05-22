@@ -102,6 +102,27 @@ namespace RJWynn.Debugging
         }
 
         /// <summary>
+        /// Prints debug comment with header ERROR: and the method the error occured and the line it occured at
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="currentMethod"></param>
+        /// <param name="lineNumberOfClass"></param>
+        public static void Error(Exception exception)
+        {
+            WriteToLog(String.Format("ERROR: \"{0}\" @code: {1}, source: {2}", exception.Message, exception.TargetSite, exception.Source));
+            if (errorFile != null)
+            {
+                if (doLog)
+                {
+                    using (StreamWriter w = File.AppendText(errorFile))
+                    {
+                        w.WriteLine(String.Format("ERROR: \"{0}\" @code: {1}, source: {2}", exception.Message, exception.TargetSite, exception.Source));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Prints debug comment with header Debug: and the method the message occured
         /// </summary>
         /// <param name="message"></param>

@@ -1,4 +1,11 @@
-Version 1.4.3.0 (Last Release)
+Version 1.4.4.0 (Last Release)
+
+Update Notes:
+
+Fixes:
+ - Fixed the auto update feature trying to download installer to program files, causing a permissions error
+
+Version 1.4.3.0
 
 Update Notes:
 

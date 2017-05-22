@@ -1643,36 +1643,53 @@ namespace MyCookbook
 
         private bool checkAndTryUpdate()
         {
-            string filePath = "MyCookbookSetup.msi";
-
-            string latestVersion = AutoUpdater.CheckForUpdate();
-            if (AutoUpdater.CheckVersions(Assembly.GetExecutingAssembly().GetName().Version.ToString(), latestVersion))
+            try
             {
-                MyDebug.Print("Update found, asking to update");
-                string message = "A new version of MyCookbook is available, do you want to install it now?";
-                string caption = "Update";
-                MessageBoxButtons buttons = MessageBoxButtons.YesNo;
+                string filePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\MyCookbook\MyCookbookSetup.msi";
 
-                DialogResult result;
-
-                result = MessageBox.Show(message, caption, buttons);
-
-                if (result == DialogResult.Yes)
+                string latestVersion = AutoUpdater.CheckForUpdate();
+                if (AutoUpdater.CheckVersions(Assembly.GetExecutingAssembly().GetName().Version.ToString(), latestVersion))
                 {
-                    if(File.Exists(filePath))
+                    MyDebug.Print("Update found, asking to update");
+                    string message = "A new version of MyCookbook is available, do you want to install it now?";
+                    string caption = "Update";
+                    MessageBoxButtons buttons = MessageBoxButtons.YesNo;
+
+                    DialogResult result;
+
+                    result = MessageBox.Show(message, caption, buttons);
+
+                    if (result == DialogResult.Yes)
                     {
-                        File.Delete(filePath);
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+
+                        AutoUpdater.GetUpdate(latestVersion);
+                        MyDebug.Print("New version downloaded, running installer and closing current application");
+                        Process.Start(filePath);
+
+                        return true;
                     }
-
-                    AutoUpdater.GetUpdate(latestVersion);
-                    MyDebug.Print("New versiond downloaded, running installer and closing current application");
-                    Process.Start(filePath);
-                    
-                    return true;
                 }
-            }
 
-            return false;
+                return false;
+            }
+            catch (Exception e)
+            {
+                MyDebug.Print("An error occured while getting an update");
+                MyDebug.Error(e);
+
+                string message = "The following error occured while trying to check for or download an update:\n" + e.Message;
+                string caption = "Update error";
+                MessageBoxButtons buttons = MessageBoxButtons.OK;
+
+                MessageBox.Show(message, caption, buttons);
+
+                return false;
+            }
+            
         }
 
         private void closeCurrentCookbookToolStripMenuItem_Click(object sender, EventArgs e)

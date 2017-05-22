@@ -18,32 +18,42 @@ namespace MyCookbook
         public static string CheckForUpdate()
         {
             MyDebug.Print("Checking for new version");
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(PATH);
-            //webRequest.CookieContainer = new CookieContainer();
-            webRequest.ProtocolVersion = HttpVersion.Version10;
-            webRequest.KeepAlive = false;
-            webRequest.Method = "GET";
-            webRequest.ContentType = "application/x-www-form-urlencoded";
-            webRequest.Accept = "text";
-            webRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.168 Safari/535.19";
-
-            HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
-            StreamReader streamReader = new StreamReader(webResponse.GetResponseStream());
-
-            string html = streamReader.ReadToEnd();
-            webResponse.Close();
-
-            int tagIndex = html.IndexOf("tag_name");
-            string version = "";
-            if (tagIndex >= 0)
+            try
             {
-                tagIndex += 12;
-                int endQuote = html.IndexOf("\"", tagIndex);
+                HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(PATH);
+                //webRequest.CookieContainer = new CookieContainer();
+                webRequest.ProtocolVersion = HttpVersion.Version10;
+                webRequest.KeepAlive = false;
+                webRequest.Method = "GET";
+                webRequest.ContentType = "application/x-www-form-urlencoded";
+                webRequest.Accept = "text";
+                webRequest.UserAgent = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.168 Safari/535.19";
 
-                version = html.Substring(tagIndex, endQuote - tagIndex);
+                HttpWebResponse webResponse = (HttpWebResponse)webRequest.GetResponse();
+                StreamReader streamReader = new StreamReader(webResponse.GetResponseStream());
+
+                string html = streamReader.ReadToEnd();
+                webResponse.Close();
+
+                int tagIndex = html.IndexOf("tag_name");
+                string version = "";
+                if (tagIndex >= 0)
+                {
+                    tagIndex += 12;
+                    int endQuote = html.IndexOf("\"", tagIndex);
+
+                    version = html.Substring(tagIndex, endQuote - tagIndex);
+                }
+
+                return version;
             }
-
-            return version;
+            catch (Exception e)
+            {
+                MyDebug.Print("Error occured while checking for update");
+                MyDebug.Error(e);
+                throw e;
+            }
+            
         }
 
         /// <summary>
@@ -52,9 +62,20 @@ namespace MyCookbook
         /// <param name="version">Version ID for version to download</param>
         public static void GetUpdate(string version)
         {
+            string filePath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\MyCookbook\MyCookbookSetup.msi";
             MyDebug.Print("Downloading new version");
-            WebClient Client = new WebClient();
-            Client.DownloadFile(DOWNLOAD_PATH_TOP + version + DOWNLOAD_PATH_END, "MyCookbookSetup.msi");            
+            try
+            {
+                WebClient Client = new WebClient();
+                Client.DownloadFile(DOWNLOAD_PATH_TOP + version + DOWNLOAD_PATH_END, filePath);
+            }
+            catch (Exception e)
+            {
+                MyDebug.Print("Error occured while getting update");
+                MyDebug.Error(e);
+                throw e;
+            }
+                 
         }
 
         /// <summary>
